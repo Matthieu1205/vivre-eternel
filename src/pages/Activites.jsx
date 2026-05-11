@@ -189,6 +189,63 @@ export default function Activites() {
           <p>De l&apos;Évangile prêché dans les rues au pain partagé dans les quartiers — la foi en action.</p>
         </div>
       </div>
+      {/* Mont des Oliviers – projet phare */}
+      <div style={{ background: 'var(--bg2)', borderBottom: '1px solid var(--border)', padding: '3rem 0' }}>
+        <div className="container">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '1.5rem' }}>
+            <span style={{ width: 4, height: 28, borderRadius: 4, background: 'var(--blue)', display: 'inline-block' }} />
+            <span style={{ fontSize: '.75rem', fontWeight: 700, letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--blue)' }}>Projet phare</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '3rem', alignItems: 'center' }}>
+            {/* Image */}
+            <div style={{ borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 56px rgba(0,0,0,.18)', lineHeight: 0 }}>
+              <img
+                src="/action.jpeg"
+                alt="Ouverture du Mont des Oliviers"
+                style={{ width: '100%', display: 'block' }}
+                onError={e => { e.target.parentElement.style.display = 'none' }}
+              />
+            </div>
+            {/* Infos */}
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '.4rem', background: '#FEF3C7', color: '#B45309', borderRadius: 100, padding: '.25rem .85rem', fontSize: '.75rem', fontWeight: 700, marginBottom: '1rem' }}>
+                <i className="fas fa-hard-hat" /> Projet en construction
+              </div>
+              <h2 style={{ fontFamily: 'var(--fs)', fontSize: '1.9rem', color: 'var(--blue-dark)', marginBottom: '.75rem', lineHeight: 1.2 }}>
+                Ouverture du<br />Mont des Oliviers
+              </h2>
+              <p style={{ fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.8, marginBottom: '1.25rem' }}>
+                Centre d'accueil et d'accompagnement spirituel, moral, psychologique, matériel et alimentaire — un lieu de refuge et de restauration pour les familles, les couples et les jeunes.
+              </p>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '.55rem', marginBottom: '1.5rem' }}>
+                {['Accompagnement Spirituel', 'Soutien Moral & Psychologique', 'Aide Matérielle & Alimentaire'].map(pt => (
+                  <li key={pt} style={{ display: 'flex', gap: '.65rem', alignItems: 'center', fontSize: '.88rem', color: 'var(--text2)' }}>
+                    <i className="fas fa-check-circle" style={{ color: 'var(--blue)', flexShrink: 0 }} /> {pt}
+                  </li>
+                ))}
+              </ul>
+              <div style={{ display: 'flex', gap: '.6rem', fontSize: '.82rem', color: 'var(--text2)', marginBottom: '1.75rem' }}>
+                <span><i className="fas fa-ruler-combined" style={{ color: 'var(--blue)', marginRight: '.3rem' }} /> Superficie : 300 m²</span>
+                <span style={{ color: 'var(--border)' }}>|</span>
+                <span><i className="fas fa-map" style={{ color: 'var(--blue)', marginRight: '.3rem' }} /> Terrain : 600 m²</span>
+              </div>
+              <div className="verse-block" style={{ marginBottom: '1.75rem' }}>
+                <p>Et moi, si j'ai été élevé de la terre, j'attirerai tous les hommes à moi.</p>
+                <cite>Ésaïe 59:16</cite>
+              </div>
+              <a
+                href="https://don-mont-des-oliviers.klicvote.com/"
+                target="_blank" rel="noreferrer"
+                className="btn btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', fontSize: '.95rem' }}
+              >
+                <i className="fas fa-heart" /> Faire un don · 1 000 FCFA = 1 vie changée
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <section className="section">
         <div className="container"><Component /></div>
       </section>

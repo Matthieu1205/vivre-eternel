@@ -14,7 +14,13 @@ const nav = [
 ]
 
 export default function AdminLayout() {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
+
+  const toggleCollapsed = () => {
+    const next = !collapsed
+    setCollapsed(next)
+    localStorage.setItem('sidebar-collapsed', next)
+  }
   const navigate = useNavigate()
 
   const handleLogout = () => { logout(); navigate('/admin') }
@@ -27,17 +33,28 @@ export default function AdminLayout() {
         display: 'flex', flexDirection: 'column', transition: 'width .25s', flexShrink: 0
       }}>
         {/* Logo */}
-        <div style={{ padding: '1.25rem 1rem', display: 'flex', alignItems: 'center', gap: '.75rem', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
-          <img src="/logo.png" alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-            onError={e => { e.target.style.display = 'none' }} />
-          {!collapsed && <div>
-            <p style={{ margin: 0, fontWeight: 800, fontSize: '.85rem', lineHeight: 1.2 }}>VPE Admin</p>
-            <p style={{ margin: 0, fontSize: '.7rem', color: '#94a3b8' }}>Backoffice</p>
-          </div>}
-          <button onClick={() => setCollapsed(!collapsed)}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1rem', padding: '.25rem' }}>
-            {collapsed ? '→' : '←'}
-          </button>
+        <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
+          {!collapsed ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+              <img src="/logo.png" alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                onError={e => { e.target.style.display = 'none' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: '.85rem', lineHeight: 1.2 }}>VPE Admin</p>
+                <p style={{ margin: 0, fontSize: '.7rem', color: '#94a3b8' }}>Backoffice</p>
+              </div>
+              <button onClick={toggleCollapsed}
+                style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className="fas fa-chevron-left" style={{ fontSize: '.7rem' }} />
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <button onClick={toggleCollapsed}
+                style={{ background: 'rgba(255,255,255,.08)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <i className="fas fa-chevron-right" style={{ fontSize: '.75rem' }} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Nav */}
@@ -59,10 +76,10 @@ export default function AdminLayout() {
 
         {/* Footer */}
         <div style={{ padding: '.75rem .5rem', borderTop: '1px solid rgba(255,255,255,.08)' }}>
-          <a href="/" target="_blank" rel="noreferrer"
-            style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.6rem .75rem', borderRadius: 10, color: '#94a3b8', textDecoration: 'none', fontSize: '.82rem', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-            <i className="fas fa-external-link-alt" style={{ fontSize: '.9rem', width: 16, textAlign: 'center', flexShrink: 0 }} />{!collapsed && 'Voir le site'}
-          </a>
+          <button onClick={() => navigate('/')}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.6rem .75rem', borderRadius: 10, background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '.82rem', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+            <i className="fas fa-arrow-left" style={{ fontSize: '.9rem', width: 16, textAlign: 'center', flexShrink: 0 }} />{!collapsed && 'Retour au site'}
+          </button>
           <button onClick={handleLogout}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.6rem .75rem', borderRadius: 10, background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '.82rem', whiteSpace: 'nowrap', overflow: 'hidden' }}>
             <i className="fas fa-sign-out-alt" style={{ fontSize: '.9rem', width: 16, textAlign: 'center', flexShrink: 0 }} />{!collapsed && 'Déconnexion'}
