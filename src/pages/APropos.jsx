@@ -149,7 +149,7 @@ const TABS = [
         <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '3rem', alignItems: 'start', marginBottom: '3rem' }}>
           <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,.18)', lineHeight: 0 }}>
             <img
-              src="/responsable.jpg"
+              src="/responsable-new.jpg"
               alt="Le Responsable du Ministère"
               style={{ width: '100%', display: 'block', objectFit: 'cover', objectPosition: 'top center' }}
               onError={e => { e.target.parentElement.style.display = 'none' }}
