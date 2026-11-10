@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useContent } from '../lib/data'
 
-const terrain = [
+const terrain_defaut = [
   { lieu: "Marché de Cocody", date: "15 Jan 2025", participants: 12, ames: 8, desc: "Distribution de l'Évangile de Jean et prière pour les malades au marché." },
   { lieu: "Hôpital Général d'Abidjan", date: "08 Jan 2025", participants: 8, ames: 4, desc: "Visite aux patients. Prière, encouragement et partage de la Parole de vie." },
   { lieu: "Prison d'Abidjan", date: "20 Déc 2024", participants: 6, ames: 15, desc: "Culte de Noël en prison. La grâce de Dieu touchée par plusieurs détenus." },
   { lieu: "Quartier Abobo", date: "12 Déc 2024", participants: 20, ames: 22, desc: "Campagne de rue intensive. Témoignages de guérison et de conversions." },
 ]
 
-const actions_sociales = [
+const actions_sociales_defaut = [
   { titre: "Distribution Alimentaire", icon: "fas fa-bread-slice", date: "10 Jan 2025", beneficiaires: 120, desc: "Repas chauds et denrées distribuées aux familles en difficulté du quartier." },
   { titre: "Soutien Scolaire", icon: "fas fa-book", date: "Toute l'année", beneficiaires: 35, desc: "Cours de soutien gratuits pour enfants défavorisés, tous les samedis." },
   { titre: "Visite des Orphelinats", icon: "fas fa-child", date: "25 Déc 2024", beneficiaires: 80, desc: "Cadeaux de Noël, repas spéciaux et animations pour les enfants orphelins." },
   { titre: "Assistance aux Veuves", icon: "fas fa-hands", date: "Nov 2024", beneficiaires: 18, desc: "Accompagnement pastoral et matériel pour les veuves de la communauté." },
 ]
 
-const evenements = [
+const evenements_defaut = [
   { titre: "Veillée de Prière Mensuelle", date: "Chaque dernier vendredi", heure: "21h – 3h", lieu: "Siège du ministère", type: "Prière", inscrit: true },
   { titre: "Retraite Spirituelle Couples 2025", date: "14 – 16 Mars 2025", heure: "Toute la journée", lieu: "Hôtel Palm Club", type: "Famille", inscrit: false },
   { titre: "Conférence Intercession Nationale", date: "5 Avril 2025", heure: "09h – 18h", lieu: "Palais de la Culture", type: "Conférence", inscrit: false },
@@ -23,7 +24,7 @@ const evenements = [
   { titre: "Séminaire : Guerre Spirituelle", date: "22 Fév 2025", heure: "10h – 17h", lieu: "En ligne & Présentiel", type: "Formation", inscrit: true },
 ]
 
-const galerie = [
+const galerie_defaut = [
   { titre: "Veillée de Prière – Janvier 2025", cat: "Prière", count: 24 },
   { titre: "Évangélisation au Marché de Cocody", cat: "Évangélisation", count: 18 },
   { titre: "Distribution Alimentaire – Abobo", cat: "Social", count: 32 },
@@ -32,9 +33,19 @@ const galerie = [
   { titre: "Conférence Intercession 2024", cat: "Conférence", count: 60 },
 ]
 
+// Charge les activités d'une catégorie depuis Supabase (contenu par défaut sinon).
+function useActivites(categorie, map, fallback) {
+  return useContent('activites-' + categorie,
+    db => db.from('activites').select('*').eq('categorie', categorie).order('id', { ascending: false }),
+    map, fallback).items
+}
+
 const palette = ['#0284C7', '#0EA5E9', '#B8860B', '#DAA520', '#075985', '#38BDF8']
 
 function TerrainTab() {
+  const terrain = useActivites('terrain', r => ({
+    lieu: r.lieu || r.titre, date: r.date, participants: r.participants, ames: r.ames, desc: r.description,
+  }), terrain_defaut)
   return (
     <div>
       <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.5rem', marginBottom: '.5rem' }}>Évangélisation Terrain</h3>
@@ -54,12 +65,16 @@ function TerrainTab() {
               </div>
               <p style={{ fontSize: '.88rem', color: 'var(--text2)', marginBottom: '.6rem' }}>{t.desc}</p>
               <div style={{ display: 'flex', gap: '1.5rem' }}>
-                <span style={{ fontSize: '.8rem', color: 'var(--blue)', fontWeight: 600 }}>
-                  <i className="fas fa-users" style={{ marginRight: '.3rem' }} />{t.participants} participants
-                </span>
-                <span style={{ fontSize: '.8rem', color: 'var(--gold)', fontWeight: 600 }}>
-                  <i className="fas fa-heart" style={{ marginRight: '.3rem' }} />{t.ames} âmes touchées
-                </span>
+                {t.participants != null && (
+                  <span style={{ fontSize: '.8rem', color: 'var(--blue)', fontWeight: 600 }}>
+                    <i className="fas fa-users" style={{ marginRight: '.3rem' }} />{t.participants} participants
+                  </span>
+                )}
+                {t.ames != null && (
+                  <span style={{ fontSize: '.8rem', color: 'var(--gold)', fontWeight: 600 }}>
+                    <i className="fas fa-heart" style={{ marginRight: '.3rem' }} />{t.ames} âmes touchées
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -77,6 +92,9 @@ function TerrainTab() {
 }
 
 function SocialTab() {
+  const actions_sociales = useActivites('social', r => ({
+    titre: r.titre, icon: r.icon || 'fas fa-hands-helping', date: r.date, beneficiaires: r.beneficiaires, desc: r.description,
+  }), actions_sociales_defaut)
   return (
     <div>
       <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.5rem', marginBottom: '.5rem' }}>Actions Sociales</h3>
@@ -86,7 +104,7 @@ function SocialTab() {
           <div key={i} className="card reveal" style={{ textAlign: 'center' }}>
             <div style={{ marginBottom: '.75rem' }}><i className={a.icon} style={{ fontSize: '2.5rem', color: 'var(--blue)' }} /></div>
             <h4 style={{ color: 'var(--blue)', fontSize: '1.05rem', marginBottom: '.25rem' }}>{a.titre}</h4>
-            <p style={{ fontSize: '.8rem', color: 'var(--text2)', marginBottom: '.75rem' }}>{a.date} · {a.beneficiaires} bénéficiaires</p>
+            <p style={{ fontSize: '.8rem', color: 'var(--text2)', marginBottom: '.75rem' }}>{[a.date, a.beneficiaires != null && `${a.beneficiaires} bénéficiaires`].filter(Boolean).join(' · ')}</p>
             <p style={{ fontSize: '.88rem', color: 'var(--text2)', lineHeight: 1.7 }}>{a.desc}</p>
           </div>
         ))}
@@ -100,6 +118,9 @@ function SocialTab() {
 }
 
 function EvenementsTab() {
+  const evenements = useActivites('evenement', r => ({
+    titre: r.titre, date: r.date, heure: r.heure, lieu: r.lieu, type: r.type || 'Événement',
+  }), evenements_defaut)
   const typeColors = { Prière: '#0284C7', Famille: '#B8860B', Conférence: '#7C3AED', Évangélisation: '#DC2626', Formation: '#059669' }
   return (
     <div>
@@ -114,16 +135,16 @@ function EvenementsTab() {
             <div style={{ flex: 1 }}>
               <h4 style={{ fontSize: '1rem', color: 'var(--text)', marginBottom: '.3rem' }}>{e.titre}</h4>
               <p style={{ fontSize: '.82rem', color: 'var(--text2)', margin: 0 }}>
-                <i className="fas fa-calendar" style={{ marginRight: '.3rem' }} />{e.date}
-                <span style={{ margin: '0 .75rem' }}>·</span>
-                <i className="fas fa-clock" style={{ marginRight: '.3rem' }} />{e.heure}
-                <span style={{ margin: '0 .75rem' }}>·</span>
-                <i className="fas fa-map-marker-alt" style={{ marginRight: '.3rem' }} />{e.lieu}
+                {[
+                  e.date && <span key="d"><i className="fas fa-calendar" style={{ marginRight: '.3rem' }} />{e.date}</span>,
+                  e.heure && <span key="h"><i className="fas fa-clock" style={{ marginRight: '.3rem' }} />{e.heure}</span>,
+                  e.lieu && <span key="l"><i className="fas fa-map-marker-alt" style={{ marginRight: '.3rem' }} />{e.lieu}</span>,
+                ].filter(Boolean).reduce((acc, el, k) => k ? [...acc, <span key={'s' + k} style={{ margin: '0 .75rem' }}>·</span>, el] : [el], [])}
               </p>
             </div>
-            <button className={`btn ${e.inscrit ? 'btn-outline' : 'btn-primary'}`} style={{ flexShrink: 0, fontSize: '.8rem' }}>
-              {e.inscrit ? <><i className="fas fa-check" /> Inscrit</> : <><i className="fas fa-calendar-plus" /> S&apos;inscrire</>}
-            </button>
+            <Link to="/contact/formulaire" className="btn btn-primary" style={{ flexShrink: 0, fontSize: '.8rem' }}>
+              <i className="fas fa-calendar-plus" /> S&apos;inscrire
+            </Link>
           </div>
         ))}
       </div>
@@ -132,6 +153,9 @@ function EvenementsTab() {
 }
 
 function GalerieTab() {
+  const galerie = useActivites('galerie', r => ({
+    titre: r.titre, cat: r.type || 'Autre', count: r.nb_photos, image: r.image_url,
+  }), galerie_defaut)
   const [filtre, setFiltre] = useState('Tous')
   const cats = ['Tous', ...new Set(galerie.map(g => g.cat))]
   const affiche = filtre === 'Tous' ? galerie : galerie.filter(g => g.cat === filtre)
@@ -150,10 +174,14 @@ function GalerieTab() {
       <div className="card-grid">
         {affiche.map((g, i) => (
           <div key={i} className="card reveal" style={{ padding: 0, overflow: 'hidden', cursor: 'pointer' }}>
-            <div style={{ height: 160, background: bg[galerie.indexOf(g) % bg.length], display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', gap: '.5rem' }}>
-              <i className="fas fa-images" style={{ fontSize: '2.5rem', opacity: .7 }} />
-              <span style={{ fontSize: '.8rem', opacity: .85 }}>{g.count} photos</span>
-            </div>
+            {g.image ? (
+              <img src={g.image} alt={g.titre} style={{ height: 160, width: '100%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <div style={{ height: 160, background: bg[galerie.indexOf(g) % bg.length], display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', gap: '.5rem' }}>
+                <i className="fas fa-images" style={{ fontSize: '2.5rem', opacity: .7 }} />
+                {g.count != null && <span style={{ fontSize: '.8rem', opacity: .85 }}>{g.count} photos</span>}
+              </div>
+            )}
             <div style={{ padding: '1rem 1.25rem' }}>
               <span style={{ fontSize: '.7rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--blue)' }}>{g.cat}</span>
               <h4 style={{ fontSize: '.9rem', color: 'var(--text)', marginTop: '.3rem' }}>{g.titre}</h4>

@@ -84,18 +84,23 @@ export default function AdminAnnonce() {
   /* ── Save / Delete ── */
   async function save() {
     setSaving(true)
-    if (editing === 'new') {
-      await supabase.from('annonces').insert([{ ...form, created_at: new Date().toISOString() }])
-    } else {
-      await supabase.from('annonces').update(form).eq('id', form.id)
+    const data = {
+      titre: form.titre, message: form.message || null, image_url: form.image_url || null,
+      date_debut: form.date_debut || null, date_fin: form.date_fin || null,
     }
-    await loadRows(); cancelEdit(); setSaving(false)
+    const { error } = editing === 'new'
+      ? await supabase.from('annonces').insert([data])
+      : await supabase.from('annonces').update(data).eq('id', form.id)
+    setSaving(false)
+    if (error) { alert('Enregistrement impossible : ' + error.message); return }
+    await loadRows(); cancelEdit()
   }
 
   async function del(id) {
     setDeleting(id)
-    await supabase.from('annonces').delete().eq('id', id)
-    setRows(r => r.filter(x => x.id !== id))
+    const { error } = await supabase.from('annonces').delete().eq('id', id)
+    if (error) alert('Suppression impossible : ' + error.message)
+    else setRows(r => r.filter(x => x.id !== id))
     setDeleting(null); setConfirmDel(null)
   }
 

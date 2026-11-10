@@ -10,21 +10,32 @@ const stats = [
   { label: 'Partenaires',  icon: 'fas fa-handshake',      color: '#DC2626', to: '/admin/partenaires',   key: 'partenaires' },
 ]
 
+// Ce qui attend une action de l'équipe.
+const todo = [
+  { label: 'Témoignages à modérer', icon: 'fas fa-comments',       color: '#D97706', to: '/admin/temoignages', table: 'temoignages',          filter: q => q.eq('statut', 'en_attente') },
+  { label: 'Messages de contact',   icon: 'fas fa-envelope',       color: '#0284C7', to: '/admin/messages',    table: 'messages_contact',     filter: q => q.eq('traite', false) },
+  { label: 'Demandes de prière',    icon: 'fas fa-hands-praying',  color: '#7C3AED', to: '/admin/messages',    table: 'demandes_priere',      filter: q => q.eq('traite', false) },
+  { label: 'Demandes de partenariat', icon: 'fas fa-handshake',    color: '#059669', to: '/admin/messages',    table: 'demandes_partenariat', filter: q => q.eq('traite', false) },
+  { label: 'Inscrits newsletter',   icon: 'fas fa-paper-plane',    color: '#475569', to: '/admin/messages',    table: 'newsletter',           filter: q => q },
+]
+
 function Card({ children, style }) {
   return <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,.06)', ...style }}>{children}</div>
 }
 
 export default function AdminDashboard() {
   const [counts, setCounts] = useState({})
+  const [todoCounts, setTodoCounts] = useState({})
 
   useEffect(() => {
     async function fetchCounts() {
-      const results = {}
-      for (const s of stats) {
-        const { count } = await supabase.from(s.key).select('*', { count: 'exact', head: true })
-        results[s.key] = count ?? '–'
-      }
-      setCounts(results)
+      const count = q => q.then(({ count }) => count ?? '–')
+      const [a, b] = await Promise.all([
+        Promise.all(stats.map(s => count(supabase.from(s.key).select('*', { count: 'exact', head: true })))),
+        Promise.all(todo.map(t => count(t.filter(supabase.from(t.table).select('*', { count: 'exact', head: true }))))),
+      ])
+      setCounts(Object.fromEntries(stats.map((s, i) => [s.key, a[i]])))
+      setTodoCounts(Object.fromEntries(todo.map((t, i) => [t.label, b[i]])))
     }
     fetchCounts()
   }, [])
@@ -39,7 +50,24 @@ export default function AdminDashboard() {
         </p>
       </div>
 
+      {/* À traiter */}
+      <h2 style={{ margin: '0 0 .75rem', fontSize: '1rem', fontWeight: 700, color: '#0c1a2e' }}>À traiter</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+        {todo.map(t => (
+          <Link key={t.label} to={t.to} style={{ textDecoration: 'none' }}>
+            <Card style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <i className={t.icon} style={{ fontSize: '1.3rem', color: t.color }} />
+                <span style={{ fontSize: '1.75rem', fontWeight: 800, color: t.color }}>{todoCounts[t.label] ?? '…'}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: '.85rem', fontWeight: 600, color: '#374151' }}>{t.label}</p>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
       {/* Stats */}
+      <h2 style={{ margin: '0 0 .75rem', fontSize: '1rem', fontWeight: 700, color: '#0c1a2e' }}>Contenu du site</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {stats.map(s => (
           <Link key={s.key} to={s.to} style={{ textDecoration: 'none' }}>

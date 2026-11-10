@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { submitForm, useContent, formatDate } from '../lib/data'
+import FormError from '../components/FormError'
 
 const temoignages_ecrits = [
   { nom: "Grace A.", lieu: "Abidjan", date: "Jan 2025", cat: "Guérison", texte: "J'étais diagnostiquée avec une maladie grave que les médecins jugeaient incurable. Après des mois de prière avec l'équipe d'intercession de VPE, j'ai été examinée à nouveau — les médecins étaient stupéfaits. Dieu est réel et il guérit encore aujourd'hui.", emoji: "fas fa-hospital" },
@@ -16,11 +18,26 @@ const temoignages_video = [
   { nom: "Sœur Adèle K.", duree: "10 min", cat: "Délivrance", desc: "15 ans sous l'emprise de liens occultes — comment j'ai été libérée." },
 ]
 
-const cats = ['Tous', 'Guérison', 'Famille', 'Délivrance', 'Provision', 'Restauration']
+const catIcons = { Guérison: 'fas fa-hospital', Famille: 'fas fa-users', Délivrance: 'fas fa-unlock', Provision: 'fas fa-briefcase', Restauration: 'fas fa-leaf', Conversion: 'fas fa-cross' }
+
+const fromDb = r => ({
+  nom: r.nom || 'Anonyme',
+  lieu: r.lieu || '',
+  date: new Date(r.created_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }),
+  cat: r.categorie || 'Autre',
+  texte: r.contenu,
+  emoji: catIcons[r.categorie] || 'fas fa-star',
+})
 
 function EcritsTab() {
   const [filtre, setFiltre] = useState('Tous')
-  const affiche = filtre === 'Tous' ? temoignages_ecrits : temoignages_ecrits.filter(t => t.cat === filtre)
+  // Colonnes listées explicitement : l'email n'est jamais lisible publiquement.
+  const { items } = useContent('temoignages',
+    db => db.from('temoignages').select('id, nom, lieu, categorie, contenu, created_at')
+      .eq('statut', 'approuve').eq('publier', true).order('created_at', { ascending: false }),
+    fromDb, temoignages_ecrits)
+  const cats = ['Tous', ...new Set(items.map(t => t.cat))]
+  const affiche = filtre === 'Tous' ? items : items.filter(t => t.cat === filtre)
   const catColor = { Guérison: '#0284C7', Famille: '#B8860B', Délivrance: '#7C3AED', Provision: '#059669', Restauration: '#0EA5E9' }
   return (
     <div>
@@ -39,7 +56,7 @@ function EcritsTab() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>
                 <strong style={{ color: 'var(--text)', fontSize: '.95rem' }}>{t.nom}</strong>
-                <p style={{ fontSize: '.78rem', color: 'var(--text2)', margin: '.1rem 0 0' }}>{t.lieu} · {t.date}</p>
+                <p style={{ fontSize: '.78rem', color: 'var(--text2)', margin: '.1rem 0 0' }}>{[t.lieu, t.date].filter(Boolean).join(' · ')}</p>
               </div>
               <span style={{ fontSize: '.72rem', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: catColor[t.cat] || 'var(--blue)', background: `${catColor[t.cat]}18`, padding: '.2rem .6rem', borderRadius: 20, flexShrink: 0 }}>{t.cat}</span>
             </div>
@@ -79,14 +96,23 @@ function VideoTestimTab() {
 }
 
 function PartagerTab() {
-  const [form, setForm] = useState({ nom: '', email: '', categorie: '', temoignage: '', publier: true })
+  const empty = { nom: '', email: '', lieu: '', categorie: '', temoignage: '', publier: true }
+  const [form, setForm] = useState(empty)
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const up = e => { const { name, value, type, checked } = e.target; setForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value })) }
   const submit = async e => {
-    e.preventDefault(); setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false); setStatus('ok')
+    e.preventDefault(); setError('')
+    if (form.temoignage.trim().length < 10) { setError('Votre témoignage est un peu court : quelques phrases suffisent.'); return }
+    setLoading(true)
+    const { error } = await submitForm('temoignages', {
+      nom: form.nom.trim() || null, email: form.email.trim() || null, lieu: form.lieu.trim() || null,
+      categorie: form.categorie || null, contenu: form.temoignage.trim(), publier: form.publier,
+    })
+    setLoading(false)
+    if (error) { setError(error); return }
+    setStatus('ok'); setForm(empty)
   }
 
   if (status === 'ok') return (
@@ -130,12 +156,18 @@ function PartagerTab() {
             <input type="email" name="email" value={form.email} onChange={up} placeholder="Optionnel" />
           </div>
         </div>
-        <div className="form-group">
-          <label>Catégorie</label>
-          <select name="categorie" value={form.categorie} onChange={up}>
-            <option value="">Choisir une catégorie</option>
-            {['Guérison', 'Famille', 'Délivrance', 'Provision', 'Conversion', 'Autre'].map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Ville / Pays</label>
+            <input type="text" name="lieu" value={form.lieu} onChange={up} placeholder="Optionnel" />
+          </div>
+          <div className="form-group">
+            <label>Catégorie</label>
+            <select name="categorie" value={form.categorie} onChange={up}>
+              <option value="">Choisir une catégorie</option>
+              {['Guérison', 'Famille', 'Délivrance', 'Provision', 'Restauration', 'Conversion', 'Autre'].map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
         </div>
         <div className="form-group">
           <label>Votre témoignage *</label>
@@ -146,6 +178,7 @@ function PartagerTab() {
           <input type="checkbox" name="publier" checked={form.publier} onChange={up} />
           <span>J&apos;autorise la publication de mon témoignage sur le site</span>
         </label>
+        <FormError message={error} />
         <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%' }}>
           {loading ? <><i className="fas fa-spinner fa-spin" /> Envoi…</> : <><i className="fas fa-share-alt" /> Partager mon témoignage</>}
         </button>

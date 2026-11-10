@@ -21,6 +21,7 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
   const [deleting, setDeleting] = useState(null)
   const [confirmDel, setConfirmDel] = useState(null)
   const [search, setSearch]     = useState('')
+  const [error, setError]       = useState('')
 
   useEffect(() => { fetchData() }, [tableName])
 
@@ -31,26 +32,36 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
     setLoading(false)
   }
 
-  function openNew()  { setForm(defaultRow); setEditing('new') }
-  function openEdit(row) { setForm({ ...row }); setEditing(row) }
-  function cancelEdit()  { setEditing(null); setForm({}) }
+  function openNew()  { setForm(defaultRow); setEditing('new'); setError('') }
+  function openEdit(row) { setForm({ ...row }); setEditing(row); setError('') }
+  function cancelEdit()  { setEditing(null); setForm({}); setError('') }
+
+  // Only send the editable fields; empty inputs become NULL (needed for number/date columns).
+  function payload() {
+    const out = {}
+    for (const f of fields) {
+      const v = form[f.key]
+      out[f.key] = v === '' || v === undefined ? null : f.type === 'number' ? Number(v) : v
+    }
+    return out
+  }
 
   async function save() {
     setSaving(true)
-    if (editing === 'new') {
-      const { error } = await supabase.from(tableName).insert([{ ...form, created_at: new Date().toISOString() }])
-      if (!error) { fetchData(); cancelEdit() }
-    } else {
-      const { error } = await supabase.from(tableName).update(form).eq('id', form.id)
-      if (!error) { fetchData(); cancelEdit() }
-    }
+    setError('')
+    const { error } = editing === 'new'
+      ? await supabase.from(tableName).insert([payload()])
+      : await supabase.from(tableName).update(payload()).eq('id', form.id)
+    if (error) setError(error.message)
+    else { fetchData(); cancelEdit() }
     setSaving(false)
   }
 
   async function deleteRow(id) {
     setDeleting(id)
-    await supabase.from(tableName).delete().eq('id', id)
-    setRows(r => r.filter(x => x.id !== id))
+    const { error } = await supabase.from(tableName).delete().eq('id', id)
+    if (error) alert(`Suppression impossible : ${error.message}`)
+    else setRows(r => r.filter(x => x.id !== id))
     setDeleting(null)
     setConfirmDel(null)
   }
@@ -265,9 +276,10 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
                       textTransform: 'uppercase', letterSpacing: '.08em',
                     }}>{f.label}</label>
 
+                    {f.help && <p style={{ margin: '-.2rem 0 .45rem', fontSize: '.75rem', color: '#94a3b8' }}>{f.help}</p>}
                     {f.type === 'textarea' ? (
                       <textarea
-                        value={form[f.key] || ''}
+                        value={form[f.key] ?? ''}
                         onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                         rows={4} placeholder={f.placeholder || ''}
                         style={{ ...inputBase, resize: 'vertical', lineHeight: 1.65 }}
@@ -276,7 +288,7 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
                       />
                     ) : f.type === 'select' ? (
                       <select
-                        value={form[f.key] || ''}
+                        value={form[f.key] ?? ''}
                         onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                         style={{
                           ...inputBase, cursor: 'pointer', appearance: 'none',
@@ -292,7 +304,7 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
                     ) : (
                       <input
                         type={f.type || 'text'}
-                        value={form[f.key] || ''}
+                        value={form[f.key] ?? ''}
                         onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                         placeholder={f.placeholder || ''}
                         style={inputBase}
@@ -303,6 +315,12 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
                   </div>
                 ))}
               </div>
+
+              {error && (
+                <p style={{ margin: '1.25rem 0 0', padding: '.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#b91c1c', fontSize: '.84rem' }}>
+                  <i className="fas fa-exclamation-triangle" /> Enregistrement impossible : {error}
+                </p>
+              )}
 
               <div style={{ display: 'flex', gap: '.75rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
                 <button onClick={cancelEdit} style={{

@@ -31,15 +31,22 @@ const columns = [
 ]
 
 const fields = [
-  { key: 'categorie',   label: 'Catégorie',          type: 'select', options: ['terrain', 'social', 'evenement', 'galerie'] },
-  { key: 'titre',       label: "Titre de l'activité", placeholder: 'Évangélisation au marché de…' },
-  { key: 'description', label: 'Description',         type: 'textarea', placeholder: "Détails de l'activité…" },
-  { key: 'date',        label: 'Date',                type: 'date' },
-  { key: 'lieu',        label: 'Lieu',                placeholder: 'Abidjan, Modeste Nouveau Goudron' },
-  { key: 'image_url',   label: 'Lien image (URL)',    placeholder: 'https://…' },
+  { key: 'categorie',     label: 'Catégorie',           type: 'select', options: ['terrain', 'social', 'evenement', 'galerie'] },
+  { key: 'titre',         label: "Titre de l'activité", placeholder: 'Évangélisation au marché de…' },
+  { key: 'description',   label: 'Description',         type: 'textarea', placeholder: "Détails de l'activité…" },
+  { key: 'date',          label: 'Date',                placeholder: '15 Jan 2025 — ou — Chaque dernier vendredi', help: 'Texte libre, affiché tel quel.' },
+  { key: 'heure',         label: 'Heure (événements)',  placeholder: '21h – 3h' },
+  { key: 'lieu',          label: 'Lieu',                placeholder: 'Abidjan, Modeste Nouveau Goudron' },
+  { key: 'type',          label: 'Type (événements) ou catégorie (galerie)', placeholder: 'Prière, Famille, Conférence…' },
+  { key: 'icon',          label: 'Icône (actions sociales)', placeholder: 'fas fa-bread-slice' },
+  { key: 'participants',  label: 'Participants (terrain)',   type: 'number' },
+  { key: 'ames',          label: 'Âmes touchées (terrain)',  type: 'number' },
+  { key: 'beneficiaires', label: 'Bénéficiaires (social)',   type: 'number' },
+  { key: 'nb_photos',     label: 'Nombre de photos (galerie)', type: 'number' },
+  { key: 'image_url',     label: 'Lien image (URL)',    placeholder: 'https://…' },
 ]
 
-const defaultRow = { categorie: 'terrain', titre: '', description: '', date: '', lieu: '', image_url: '' }
+const defaultRow = { categorie: 'terrain', titre: '', description: '', date: '', heure: '', lieu: '', type: '', icon: '', participants: '', ames: '', beneficiaires: '', nb_photos: '', image_url: '' }
 
 export default function AdminActivites() {
   return <AdminTable title="Activités & Actions" icon="fas fa-globe" tableName="activites" columns={columns} fields={fields} defaultRow={defaultRow} />

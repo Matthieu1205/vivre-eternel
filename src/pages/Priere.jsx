@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { submitForm } from '../lib/data'
+import FormError from '../components/FormError'
+import { useProgrammes } from './Programmes'
 
 const besoins = [
   { icon: 'fas fa-hospital', label: 'Guérison & Santé' },
@@ -15,10 +18,16 @@ function FormulaireTab() {
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
   const up = e => { const { name, value, type, checked } = e.target; setForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value })) }
+  const [error, setError] = useState('')
   const submit = async e => {
-    e.preventDefault(); setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false); setStatus('ok')
+    e.preventDefault(); setLoading(true); setError('')
+    const { error } = await submitForm('demandes_priere', {
+      nom: form.nom.trim() || null, email: form.email.trim() || null,
+      categorie: form.categorie || null, priere: form.priere.trim(), confidentiel: form.confidentiel,
+    })
+    setLoading(false)
+    if (error) { setError(error); return }
+    setStatus('ok')
     setForm({ nom: '', email: '', categorie: '', priere: '', confidentiel: false })
   }
   if (status === 'ok') return (
@@ -76,6 +85,7 @@ function FormulaireTab() {
           <input type="checkbox" name="confidentiel" checked={form.confidentiel} onChange={up} />
           <span>Demande confidentielle (partagée uniquement avec les intercesseurs)</span>
         </label>
+        <FormError message={error} />
         <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%' }}>
           {loading ? <><i className="fas fa-spinner fa-spin" /> Envoi…</> : <><i className="fas fa-hands-praying" /> Soumettre ma prière</>}
         </button>
@@ -100,43 +110,10 @@ function FormulaireTab() {
 }
 
 function ProgrammeTab() {
-  const programmes = [
-    {
-      icon: 'fas fa-heart',
-      titre: "L'Esprit Saint dans le Couple",
-      desc: "Séminaire d'évangélisation : enseignement, prière, suivi spirituel",
-      horaire: "Chaque vendredi de 19h30 à 21h",
-      color: '#0284C7',
-    },
-    {
-      icon: 'fas fa-link',
-      titre: "Autorité sur les Eaux Profondes",
-      desc: "Écoute et Prière de délivrance",
-      horaire: "Chaque Mardi et Jeudi · 08h30 – 17h",
-      color: '#7C3AED',
-    },
-    {
-      icon: 'fas fa-leaf',
-      titre: "Rosée de Miséricorde",
-      desc: "Assemblée de prière d'intercession — Louange, enseignement, adoration, effusion du Saint-Esprit",
-      horaire: "Chaque samedi de 8h30 à 12h30",
-      color: '#059669',
-    },
-    {
-      icon: 'fas fa-music',
-      titre: "La Puissance de la Louange",
-      desc: "Spectacle de Louange, enseignement, effusion du Saint-Esprit, Témoignages",
-      horaire: "Chaque 3 mois",
-      color: '#D97706',
-    },
-    {
-      icon: 'fas fa-home',
-      titre: "Pastorale",
-      desc: "Visite des Familles, des couples, et la jeunesse — Écoute, suivi spirituel, prière",
-      horaire: "Chaque dimanche et lundi · 08h – 20h",
-      color: '#DC2626',
-    },
-  ]
+  const colors = ['#0284C7', '#7C3AED', '#059669', '#D97706', '#DC2626']
+  const programmes = useProgrammes().map((p, i) => ({
+    icon: p.icon, titre: p.label, desc: p.desc, horaire: p.horaire, color: colors[i % colors.length],
+  }))
 
   return (
     <div style={{ maxWidth: 820 }}>

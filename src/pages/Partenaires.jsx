@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useContent, lines } from '../lib/data'
 
 const partenaires = [
   {
@@ -76,11 +77,30 @@ const partenaires = [
   },
 ]
 
+const fromDb = r => {
+  const c = r.couleur || '#0284C7'
+  return {
+    id: r.slug || String(r.id),
+    nom: r.nom,
+    icon: r.icon || 'fas fa-handshake',
+    categorie: r.secteur,
+    desc: r.description,
+    mission: r.mission,
+    services: lines(r.services),
+    verse: { text: r.verse_text, ref: r.verse_ref },
+    collab: r.collab,
+    gradient: `linear-gradient(135deg, ${c}, ${c}b3)`,
+  }
+}
+
 export default function Partenaires() {
   const { tab: urlTab } = useParams()
-  const active = (urlTab && ['espoir', 'artisan', 'grandmedias', 'afrikart', 'wely', 'panivore'].includes(urlTab)) ? urlTab : 'espoir'
   const navigate = useNavigate()
-  const p = partenaires.find(x => x.id === active)
+  const { items } = useContent('partenaires',
+    db => db.from('partenaires').select('*').order('ordre').order('id'),
+    fromDb, partenaires)
+  const p = items.find(x => x.id === urlTab) || items[0]
+  const active = p.id
 
   return (
     <>
@@ -106,10 +126,12 @@ export default function Partenaires() {
                 <p style={{ fontSize: '.88rem', color: 'var(--text2)', fontWeight: 600, marginBottom: '.25rem' }}>Mission</p>
                 <p style={{ fontSize: '.9rem', color: 'var(--text)', margin: 0 }}>{p.mission}</p>
               </div>
-              <div className="verse-block">
-                <p>{p.verse.text}</p>
-                <cite>{p.verse.ref}</cite>
-              </div>
+              {p.verse.text && (
+                <div className="verse-block">
+                  <p>{p.verse.text}</p>
+                  <cite>{p.verse.ref}</cite>
+                </div>
+              )}
               <div style={{ marginTop: '1.5rem', padding: '1rem 1.25rem', background: 'var(--bg2)', borderRadius: 10, border: '1px solid var(--border)' }}>
                 <p style={{ fontSize: '.8rem', fontWeight: 700, color: 'var(--blue)', marginBottom: '.35rem', textTransform: 'uppercase', letterSpacing: '.06em' }}>Notre collaboration</p>
                 <p style={{ fontSize: '.88rem', color: 'var(--text2)', margin: 0 }}>{p.collab}</p>
@@ -129,8 +151,8 @@ export default function Partenaires() {
               </div>
               <h4 style={{ fontFamily: 'var(--fs)', marginBottom: '1rem', color: 'var(--text)' }}>Nos autres partenaires</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                {partenaires.filter(x => x.id !== active).map(x => (
-                  <button key={x.id} onClick={() => navigate(`/partenaires/${t.id}`)}
+                {items.filter(x => x.id !== active).map(x => (
+                  <button key={x.id} onClick={() => navigate(`/partenaires/${x.id}`)}
                     className="card" style={{ textAlign: 'left', cursor: 'pointer', padding: '1rem' }}>
                     <div style={{ marginBottom: '.4rem' }}><i className={x.icon} style={{ fontSize: '1.5rem', color: 'var(--blue)' }} /></div>
                     <p style={{ margin: 0, fontSize: '.8rem', fontWeight: 700, color: 'var(--text)' }}>{x.nom}</p>

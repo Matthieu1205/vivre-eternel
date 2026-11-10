@@ -1,13 +1,19 @@
 import { useState } from 'react'
+import { submitForm } from '../lib/data'
 
 export default function Newsletter() {
   const [email, setEmail] = useState('')
   const [done, setDone] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const submit = async e => {
     e.preventDefault()
     if (!email) return
-    await new Promise(r => setTimeout(r, 800))
+    setLoading(true); setError('')
+    const { error } = await submitForm('newsletter', { email: email.trim().toLowerCase() })
+    setLoading(false)
+    if (error) { setError(error); return }
     setDone(true)
     setEmail('')
   }
@@ -33,11 +39,12 @@ export default function Newsletter() {
                 onChange={e => setEmail(e.target.value)}
                 required
               />
-              <button type="submit" className="btn btn-gold">
-                <i className="fas fa-paper-plane" /> S&apos;inscrire
+              <button type="submit" className="btn btn-gold" disabled={loading}>
+                {loading ? <i className="fas fa-spinner fa-spin" /> : <><i className="fas fa-paper-plane" /> S&apos;inscrire</>}
               </button>
             </form>
           )}
+          {error && <p role="alert" style={{ color: '#fecaca', fontSize: '.85rem', margin: '.5rem 0 0', flexBasis: '100%' }}>{error}</p>}
         </div>
       </div>
     </div>

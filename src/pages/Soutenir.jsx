@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { submitForm } from '../lib/data'
+import FormError from '../components/FormError'
 
 function DonTab() {
   const [montant, setMontant] = useState('')
@@ -100,14 +102,21 @@ function DonTab() {
 }
 
 function PartenariatTab() {
-  const [form, setForm] = useState({ nom: '', org: '', email: '', tel: '', type: '', message: '' })
+  const empty = { nom: '', org: '', email: '', tel: '', type: '', message: '' }
+  const [form, setForm] = useState(empty)
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const up = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
   const submit = async e => {
-    e.preventDefault(); setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false); setStatus('ok')
+    e.preventDefault(); setLoading(true); setError('')
+    const { error } = await submitForm('demandes_partenariat', {
+      nom: form.nom.trim(), organisation: form.org.trim() || null, email: form.email.trim(),
+      telephone: form.tel.trim() || null, type: form.type || null, message: form.message.trim() || null,
+    })
+    setLoading(false)
+    if (error) { setError(error); return }
+    setStatus('ok'); setForm(empty)
   }
 
   if (status === 'ok') return (
@@ -177,6 +186,7 @@ function PartenariatTab() {
           <textarea name="message" value={form.message} onChange={up} rows={4}
             placeholder="Dites-nous comment vous souhaitez vous engager..." />
         </div>
+        <FormError message={error} />
         <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%' }}>
           {loading ? <><i className="fas fa-spinner fa-spin" /> Envoi…</> : <><i className="fas fa-handshake" /> Envoyer ma demande</>}
         </button>

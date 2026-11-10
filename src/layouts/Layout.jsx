@@ -32,8 +32,14 @@ export default function Layout({ children }) {
       }),
       { threshold: 0.1 }
     )
-    document.querySelectorAll('.reveal, .reveal-left').forEach(el => io.observe(el))
-    return () => io.disconnect()
+    const observeAll = () =>
+      document.querySelectorAll('.reveal:not(.visible), .reveal-left:not(.visible)').forEach(el => io.observe(el))
+    observeAll()
+    // Le contenu chargé depuis la base (ou filtré) arrive après le premier rendu :
+    // on observe aussi les éléments ajoutés ensuite, sinon ils resteraient invisibles.
+    const mo = new MutationObserver(observeAll)
+    mo.observe(document.body, { childList: true, subtree: true })
+    return () => { io.disconnect(); mo.disconnect() }
   }, [pathname])
 
   return (

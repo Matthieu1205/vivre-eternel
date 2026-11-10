@@ -1,23 +1,34 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login } from '../lib/adminAuth'
+import { isAdmin, login } from '../lib/adminAuth'
+
+const labelStyle = { fontSize: '.82rem', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '.4rem' }
 
 export default function AdminLogin() {
+  const [email, setEmail] = useState('')
   const [pwd, setPwd] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
+  // Déjà connecté en tant qu'admin → directement au tableau de bord.
+  useEffect(() => {
+    isAdmin().then(ok => { if (ok) navigate('/admin/dashboard', { replace: true }) })
+  }, [navigate])
+
   const submit = async e => {
     e.preventDefault()
     setLoading(true)
-    await new Promise(r => setTimeout(r, 600))
-    if (login(pwd)) {
-      navigate('/admin/dashboard')
-    } else {
-      setError('Mot de passe incorrect.')
-    }
+    const { error } = await login(email.trim(), pwd)
     setLoading(false)
+    if (error) setError(error)
+    else navigate('/admin/dashboard')
+  }
+
+  const inputStyle = {
+    width: '100%', padding: '.85rem 1rem', border: `2px solid ${error ? '#ef4444' : '#e2e8f0'}`,
+    borderRadius: 10, fontSize: '1rem', outline: 'none', boxSizing: 'border-box',
+    transition: 'border-color .2s'
   }
 
   return (
@@ -38,20 +49,27 @@ export default function AdminLogin() {
         </div>
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ fontSize: '.82rem', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '.4rem' }}>
-              MOT DE PASSE ADMIN
-            </label>
+            <label style={labelStyle}>EMAIL</label>
+            <input
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setError('') }}
+              placeholder="admin@exemple.com"
+              required
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>MOT DE PASSE</label>
             <input
               type="password"
+              autoComplete="current-password"
               value={pwd}
               onChange={e => { setPwd(e.target.value); setError('') }}
               placeholder="••••••••••"
               required
-              style={{
-                width: '100%', padding: '.85rem 1rem', border: `2px solid ${error ? '#ef4444' : '#e2e8f0'}`,
-                borderRadius: 10, fontSize: '1rem', outline: 'none', boxSizing: 'border-box',
-                transition: 'border-color .2s'
-              }}
+              style={inputStyle}
             />
             {error && <p style={{ color: '#ef4444', fontSize: '.82rem', marginTop: '.35rem' }}>{error}</p>}
           </div>

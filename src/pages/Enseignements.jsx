@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useContent, formatDate } from '../lib/data'
 
-const messages_audio = [
+const messages_audio_defaut = [
   { titre: "La Puissance de la Prière Fervente", predicateur: "Frère Christian Gballou", duree: "52 min", date: "12 Jan 2025", serie: "Fondements" },
   { titre: "Marcher dans l'Esprit au Quotidien", predicateur: "Sœur Marie-Claire", duree: "45 min", date: "05 Jan 2025", serie: "Vie Chrétienne" },
   { titre: "Comprendre la Grâce de Dieu", predicateur: "Frère Christian Gballou", duree: "61 min", date: "29 Déc 2024", serie: "Théologie" },
@@ -10,21 +11,21 @@ const messages_audio = [
   { titre: "Sanctification et Sainteté de Vie", predicateur: "Sœur Esther Traoré", duree: "40 min", date: "08 Déc 2024", serie: "Vie Chrétienne" },
 ]
 
-const messages_video = [
+const messages_video_defaut = [
   { titre: "Veillée de Prière – Nuit de Gloire", lieu: "Abidjan", date: "18 Jan 2025", thumb: "fas fa-video", duree: "3h 20 min" },
   { titre: "Retraite de Délivrance 2024", lieu: "Yamoussoukro", date: "12 Oct 2024", thumb: "fas fa-video", duree: "4h 15 min" },
   { titre: "Conférence : Le Saint-Esprit et Nous", lieu: "En ligne", date: "30 Nov 2024", thumb: "fas fa-video", duree: "1h 45 min" },
   { titre: "Campagne d'Évangélisation – Marché", lieu: "Cocody", date: "05 Déc 2024", thumb: "fas fa-video", duree: "2h 10 min" },
 ]
 
-const articles = [
+const articles_defaut = [
   { titre: "Pourquoi Dieu permet-il la souffrance ?", auteur: "Frère Christian Gballou", date: "20 Jan 2025", cat: "Théologie", extrait: "La souffrance est l'une des questions les plus profondes que l'être humain puisse poser. La Bible ne nous donne pas une réponse simple, mais une réponse profonde..." },
   { titre: "7 Clés pour une Vie de Prière Épanouie", auteur: "Sœur Marie-Claire", date: "10 Jan 2025", cat: "Vie Chrétienne", extrait: "La prière n'est pas une obligation pesante, mais une invitation à une communion profonde avec notre Créateur. Voici sept clés pratiques pour transformer votre vie de prière..." },
   { titre: "Le Jeûne : Comprendre son Rôle Spirituel", auteur: "Frère David Koné", date: "02 Jan 2025", cat: "Discipline", extrait: "Le jeûne est souvent mal compris dans l'Église contemporaine. Ce n'est pas une technique pour forcer la main de Dieu, mais une discipline qui nous positionne dans l'humilité..." },
   { titre: "La Restauration après la Chute", auteur: "Frère Christian Gballou", date: "24 Déc 2024", cat: "Grâce", extrait: "Chacun de nous a connu des moments de chute spirituelle. La bonne nouvelle de l'Évangile, c'est que Dieu est le Dieu du recommencement et de la restauration..." },
 ]
 
-const versets = [
+const versets_defaut = [
   { ref: "Jean 3:16", texte: "Car Dieu a tant aimé le monde qu'il a donné son Fils unique, afin que quiconque croit en lui ne périsse point, mais qu'il ait la vie éternelle.", theme: "Amour de Dieu" },
   { ref: "Philippiens 4:13", texte: "Je puis tout par celui qui me fortifie.", theme: "Force" },
   { ref: "Jérémie 29:11", texte: "Car je connais les projets que j'ai formés sur vous, dit l'Éternel, projets de paix et non de malheur, afin de vous donner un avenir et une espérance.", theme: "Espérance" },
@@ -34,7 +35,18 @@ const versets = [
   { ref: "Ésaïe 40:31", texte: "Mais ceux qui se confient en l'Éternel renouvellent leur force. Ils prennent le vol comme les aigles.", theme: "Renouvellement" },
 ]
 
+// Charge les enseignements d'un type donné depuis Supabase (contenu par défaut sinon).
+function useEnseignements(type, map, fallback) {
+  return useContent('enseignements-' + type,
+    db => db.from('enseignements').select('*').eq('type', type)
+      .order('date', { ascending: type === 'verset', nullsFirst: false }).order('id'),
+    map, fallback).items
+}
+
 function AudioTab() {
+  const messages_audio = useEnseignements('audio', r => ({
+    titre: r.titre, predicateur: r.auteur, duree: r.duree, date: formatDate(r.date), serie: r.categorie, url: r.url,
+  }), messages_audio_defaut)
   return (
     <div>
       <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.5rem', marginBottom: '1.5rem' }}>Messages Audio</h3>
@@ -54,9 +66,15 @@ function AudioTab() {
               <span style={{ fontSize: '.8rem', color: 'var(--text2)', background: 'var(--bg2)', padding: '.25rem .75rem', borderRadius: 20 }}>
                 <i className="fas fa-clock" style={{ marginRight: '.3rem' }} />{m.duree}
               </span>
-              <button className="btn btn-primary" style={{ fontSize: '.78rem', padding: '.45rem 1rem' }}>
-                <i className="fas fa-play" /> Écouter
-              </button>
+              {m.url ? (
+                <a href={m.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ fontSize: '.78rem', padding: '.45rem 1rem' }}>
+                  <i className="fas fa-play" /> Écouter
+                </a>
+              ) : (
+                <button className="btn btn-primary" disabled style={{ fontSize: '.78rem', padding: '.45rem 1rem', opacity: .6 }}>
+                  <i className="fas fa-play" /> Bientôt
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -66,6 +84,9 @@ function AudioTab() {
 }
 
 function VideoTab() {
+  const messages_video = useEnseignements('video', r => ({
+    titre: r.titre, lieu: r.lieu, date: formatDate(r.date), thumb: 'fas fa-video', duree: r.duree, url: r.url,
+  }), messages_video_defaut)
   return (
     <div>
       <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.5rem', marginBottom: '1.5rem' }}>Messages Vidéo</h3>
@@ -74,9 +95,11 @@ function VideoTab() {
           <div key={i} className="card reveal" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ background: 'linear-gradient(135deg, var(--blue-dark), var(--blue))', height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               <i className={v.thumb} style={{ fontSize: '3rem', color: 'rgba(255,255,255,.8)' }} />
-              <button style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(255,255,255,.9)', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--blue)', fontSize: '1rem' }}>
-                <i className="fas fa-play" style={{ marginLeft: 3 }} />
-              </button>
+              {v.url && (
+                <a href={v.url} target="_blank" rel="noopener noreferrer" aria-label={`Regarder ${v.titre}`} style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(255,255,255,.9)', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--blue)', fontSize: '1rem' }}>
+                  <i className="fas fa-play" style={{ marginLeft: 3 }} />
+                </a>
+              )}
               <span style={{ position: 'absolute', bottom: 14, left: 12, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: '.72rem', padding: '.2rem .5rem', borderRadius: 4 }}>{v.duree}</span>
             </div>
             <div style={{ padding: '1rem 1.25rem' }}>
@@ -93,6 +116,9 @@ function VideoTab() {
 }
 
 function ArticlesTab() {
+  const articles = useEnseignements('article', r => ({
+    titre: r.titre, auteur: r.auteur, date: formatDate(r.date), cat: r.categorie, extrait: r.description, url: r.url,
+  }), articles_defaut)
   return (
     <div>
       <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.5rem', marginBottom: '1.5rem' }}>Articles & Méditations</h3>
@@ -107,9 +133,11 @@ function ArticlesTab() {
               </div>
               <h4 style={{ fontSize: '1.1rem', color: 'var(--text)', marginBottom: '.5rem' }}>{a.titre}</h4>
               <p style={{ fontSize: '.88rem', color: 'var(--text2)', lineHeight: 1.7, marginBottom: '.75rem' }}>{a.extrait}</p>
-              <button className="btn btn-outline" style={{ fontSize: '.78rem', padding: '.4rem 1rem' }}>
-                Lire l&apos;article <i className="fas fa-arrow-right" style={{ marginLeft: '.3rem' }} />
-              </button>
+              {a.url && (
+                <a href={a.url} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{ fontSize: '.78rem', padding: '.4rem 1rem' }}>
+                  Lire l&apos;article <i className="fas fa-arrow-right" style={{ marginLeft: '.3rem' }} />
+                </a>
+              )}
             </div>
           </div>
         ))}
@@ -119,6 +147,7 @@ function ArticlesTab() {
 }
 
 function VersetsTab() {
+  const versets = useEnseignements('verset', r => ({ ref: r.titre, texte: r.description || '', theme: r.categorie }), versets_defaut)
   const [idx, setIdx] = useState(0)
   const v = versets[idx]
   return (

@@ -9,6 +9,7 @@ const nav = [
   { to: '/admin/enseignements',icon: 'fas fa-headphones',      label: 'Enseignements' },
   { to: '/admin/activites',    icon: 'fas fa-globe',           label: 'Activités' },
   { to: '/admin/temoignages',  icon: 'fas fa-comments',        label: 'Témoignages' },
+  { to: '/admin/messages',     icon: 'fas fa-inbox',           label: 'Messages reçus' },
   { to: '/admin/partenaires',  icon: 'fas fa-handshake',       label: 'Partenaires' },
   { to: '/admin/mediatheque',  icon: 'fas fa-folder-open',     label: 'Médiathèque' },
 ]
@@ -23,7 +24,7 @@ export default function AdminLayout() {
   }
   const navigate = useNavigate()
 
-  const handleLogout = () => { logout(); navigate('/admin') }
+  const handleLogout = async () => { await logout(); navigate('/admin') }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', background: '#f1f5f9' }}>

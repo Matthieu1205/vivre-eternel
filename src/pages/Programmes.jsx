@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom'
+import { useContent, lines } from '../lib/data'
 
 const PROGS = [
   {
@@ -51,13 +52,31 @@ const PROGS = [
   },
 ]
 
-const TAB_IDS = PROGS.map(p => p.id)
+export const programmeFromDb = r => ({
+  id: r.slug || String(r.id),
+  icon: r.icon || 'fas fa-fire',
+  label: r.label,
+  banner: r.banner_url,
+  logo: r.logo_url,
+  horaire: r.horaire,
+  desc: r.description,
+  detail: r.detail || r.description,
+  verse: { text: r.verse_text, ref: r.verse_ref },
+  points: lines(r.points),
+})
+
+export function useProgrammes() {
+  return useContent('programmes',
+    db => db.from('programmes').select('*').order('ordre').order('id'),
+    programmeFromDb, PROGS).items
+}
 
 export default function Programmes() {
   const { tab: urlTab } = useParams()
-  const active = (urlTab && TAB_IDS.includes(urlTab)) ? urlTab : 'couple'
   const navigate = useNavigate()
-  const prog = PROGS.find(p => p.id === active)
+  const progs = useProgrammes()
+  const prog = progs.find(p => p.id === urlTab) || progs[0]
+  const active = prog.id
 
   return (
     <>
@@ -66,7 +85,7 @@ export default function Programmes() {
           <div className="breadcrumb"><a href="/">Accueil</a> › <span>Programmes</span></div>
           <div className="page-hero-eyebrow"><i className="fas fa-fire" style={{ marginRight: '.4rem' }} /> Nos Programmes</div>
           <h1>Programmes du Ministère</h1>
-          <p>5 programmes de rencontre avec Dieu, conçus pour transformer, libérer et fortifier.</p>
+          <p>{progs.length} programmes de rencontre avec Dieu, conçus pour transformer, libérer et fortifier.</p>
         </div>
       </div>
 
@@ -121,10 +140,12 @@ export default function Programmes() {
                 {prog.detail}
               </p>
 
-              <div className="verse-block">
-                <p>{prog.verse.text}</p>
-                <cite>{prog.verse.ref}</cite>
-              </div>
+              {prog.verse.text && (
+                <div className="verse-block">
+                  <p>{prog.verse.text}</p>
+                  <cite>{prog.verse.ref}</cite>
+                </div>
+              )}
 
               <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 <a href="/contact" className="btn btn-primary">
@@ -158,7 +179,7 @@ export default function Programmes() {
                 Autres programmes
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.85rem' }}>
-                {PROGS.filter(p => p.id !== active).slice(0, 4).map(p => (
+                {progs.filter(p => p.id !== active).slice(0, 4).map(p => (
                   <button key={p.id} onClick={() => navigate(`/programmes/${p.id}`)}
                     className="card"
                     style={{ textAlign: 'left', cursor: 'pointer', padding: 0, overflow: 'hidden', border: '1px solid var(--border)', transition: 'box-shadow .18s, transform .18s' }}

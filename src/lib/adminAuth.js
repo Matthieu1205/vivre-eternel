@@ -1,19 +1,30 @@
-// Authentification simple pour l'admin
-// Mot de passe stocké ici — à remplacer par Supabase Auth plus tard
-const ADMIN_PASSWORD = 'vpe-admin-2024'
+// Authentification du backoffice via Supabase Auth.
+// Un compte n'a accès à l'admin que s'il figure dans la table public.admins
+// (voir supabase/README.md). Les règles RLS de la base appliquent la même
+// vérification côté serveur : ce contrôle côté client ne sert qu'à l'affichage.
+import { supabase } from './supabase'
 
-export function login(password) {
-  if (password === ADMIN_PASSWORD) {
-    sessionStorage.setItem('vpe_admin', '1')
-    return true
+export async function login(email, password) {
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) return { error: 'Email ou mot de passe incorrect.' }
+  if (!(await isAdmin())) {
+    await supabase.auth.signOut()
+    return { error: "Ce compte n'a pas accès au backoffice." }
   }
-  return false
+  return {}
 }
 
 export function logout() {
-  sessionStorage.removeItem('vpe_admin')
+  return supabase.auth.signOut()
 }
 
-export function isAuthenticated() {
-  return sessionStorage.getItem('vpe_admin') === '1'
+export async function isAdmin() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return false
+  const { data } = await supabase
+    .from('admins')
+    .select('user_id')
+    .eq('user_id', session.user.id)
+    .maybeSingle()
+  return Boolean(data)
 }

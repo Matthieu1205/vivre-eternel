@@ -23,6 +23,7 @@ import AdminTemoignages from './admin/AdminTemoignages'
 import AdminPartenaires from './admin/AdminPartenaires'
 import AdminMediatheque from './admin/AdminMediatheque'
 import AdminAnnonce from './admin/AdminAnnonce'
+import AdminMessages from './admin/AdminMessages'
 import PrivateRoute from './admin/PrivateRoute'
 
 import './styles/global.css'
@@ -74,6 +75,7 @@ export default function App() {
           <Route path="enseignements" element={<AdminEnseignements />} />
           <Route path="activites" element={<AdminActivites />} />
           <Route path="temoignages" element={<AdminTemoignages />} />
+          <Route path="messages" element={<AdminMessages />} />
           <Route path="partenaires" element={<AdminPartenaires />} />
           <Route path="mediatheque" element={<AdminMediatheque />} />
         </Route>

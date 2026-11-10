@@ -1,15 +1,23 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { submitForm } from '../lib/data'
+import FormError from '../components/FormError'
 
 function FormulaireSection() {
-  const [form, setForm] = useState({ nom: '', email: '', sujet: '', message: '' })
+  const empty = { nom: '', email: '', sujet: '', message: '' }
+  const [form, setForm] = useState(empty)
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const up = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
   const submit = async e => {
-    e.preventDefault(); setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false); setStatus('ok')
+    e.preventDefault(); setLoading(true); setError('')
+    const { error } = await submitForm('messages_contact', {
+      nom: form.nom.trim(), email: form.email.trim(), sujet: form.sujet || null, message: form.message.trim(),
+    })
+    setLoading(false)
+    if (error) { setError(error); return }
+    setStatus('ok'); setForm(empty)
   }
 
   if (status === 'ok') return (
@@ -52,6 +60,7 @@ function FormulaireSection() {
         <textarea name="message" value={form.message} onChange={up} rows={6}
           placeholder="Comment pouvons-nous vous aider ?" required />
       </div>
+      <FormError message={error} />
       <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%' }}>
         {loading ? <><i className="fas fa-spinner fa-spin" /> Envoi…</> : <><i className="fas fa-paper-plane" /> Envoyer le message</>}
       </button>

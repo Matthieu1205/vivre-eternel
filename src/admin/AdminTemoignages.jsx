@@ -16,12 +16,15 @@ export default function AdminTemoignages() {
   }
 
   async function updateStatus(id, statut) {
-    await supabase.from('temoignages').update({ statut }).eq('id', id)
+    const { error } = await supabase.from('temoignages').update({ statut }).eq('id', id)
+    if (error) { alert('Mise à jour impossible : ' + error.message); return }
     setRows(r => r.map(x => x.id === id ? { ...x, statut } : x))
   }
 
   async function deleteRow(id) {
-    await supabase.from('temoignages').delete().eq('id', id)
+    if (!confirm('Supprimer définitivement ce témoignage ?')) return
+    const { error } = await supabase.from('temoignages').delete().eq('id', id)
+    if (error) { alert('Suppression impossible : ' + error.message); return }
     setRows(r => r.filter(x => x.id !== id))
   }
 
@@ -99,7 +102,17 @@ export default function AdminTemoignages() {
                         <i className={meta.icon} />{meta.label}
                       </span>
                     </div>
-                    <p style={{ margin: 0, color: '#374151', fontSize: '.9rem', lineHeight: 1.65 }}>{row.contenu}</p>
+                    {[row.lieu, row.categorie, row.email].some(Boolean) && (
+                      <p style={{ margin: '-.2rem 0 .5rem', fontSize: '.78rem', color: '#64748b' }}>
+                        {[row.lieu, row.categorie, row.email].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                    {!row.publier && (
+                      <p style={{ margin: '0 0 .5rem', fontSize: '.78rem', color: '#b45309', fontWeight: 600 }}>
+                        <i className="fas fa-eye-slash" /> L’auteur n’a pas autorisé la publication : ce témoignage ne s’affichera pas sur le site, même approuvé.
+                      </p>
+                    )}
+                    <p style={{ margin: 0, color: '#374151', fontSize: '.9rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{row.contenu}</p>
                   </div>
                   <div style={{ display: 'flex', gap: '.5rem', flexShrink: 0, flexWrap: 'wrap' }}>
                     {row.statut !== 'approuve' && (
