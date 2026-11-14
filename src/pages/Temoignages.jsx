@@ -31,11 +31,8 @@ const fromDb = r => ({
 
 function EcritsTab() {
   const [filtre, setFiltre] = useState('Tous')
-  // Colonnes listées explicitement : l'email n'est jamais lisible publiquement.
-  const { items } = useContent('temoignages',
-    db => db.from('temoignages').select('id, nom, lieu, categorie, contenu, created_at')
-      .eq('statut', 'approuve').eq('publier', true).order('created_at', { ascending: false }),
-    fromDb, temoignages_ecrits)
+  // L'API ne renvoie que les témoignages approuvés et autorisés, sans l'email.
+  const { items } = useContent('/public/temoignages', fromDb, temoignages_ecrits)
   const cats = ['Tous', ...new Set(items.map(t => t.cat))]
   const affiche = filtre === 'Tous' ? items : items.filter(t => t.cat === filtre)
   const catColor = { Guérison: '#0284C7', Famille: '#B8860B', Délivrance: '#7C3AED', Provision: '#059669', Restauration: '#0EA5E9' }

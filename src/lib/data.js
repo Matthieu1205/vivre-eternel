@@ -1,43 +1,43 @@
 import { useEffect, useState } from 'react'
-import { supabase, isSupabaseConfigured } from './supabase'
+import { api, isApiConfigured } from './api'
 
 /**
- * Enregistre une ligne envoyée depuis un formulaire public.
+ * Enregistre un formulaire public (contact, prière, témoignage…).
+ * `table` est le nom de la table côté API, ex. 'messages_contact'.
  * Renvoie { error } avec un message lisible en cas d'échec.
  */
 export async function submitForm(table, row) {
-  if (!isSupabaseConfigured) return { error: 'Le site n’est pas encore relié à sa base de données.' }
-  const { error } = await supabase.from(table).insert([row])
+  const { error, status } = await api(`/forms/${table}`, { method: 'POST', body: row })
   if (!error) return {}
-  if (error.code === '23505') return {} // déjà enregistré (ex. email déjà inscrit à la newsletter)
-  console.error(`[VPE] insertion ${table} :`, error)
+  if (status === 429 || status === 422) return { error }
+  console.error(`[VPE] envoi ${table} :`, error)
   return { error: 'L’envoi a échoué. Réessayez dans un instant ou écrivez-nous sur WhatsApp.' }
 }
 
 /**
- * Charge une liste depuis Supabase et la convertit au format d'affichage.
- * Tant que la base n'est pas configurée, ou si la table est vide ou
+ * Charge une liste publique depuis l'API et la convertit au format d'affichage.
+ * Tant que l'API n'est pas configurée, ou si la liste est vide ou
  * inaccessible, la page affiche son contenu par défaut (`fallback`).
  *
- * @param {(q: any) => any} query  ex. q => q.from('programmes').select('*').order('ordre')
+ * @param {string} path            ex. '/public/programmes' ou '/public/activites?categorie=terrain'
  * @param {(row: any) => any} map  conversion d'une ligne vers le format attendu par la page
  */
-export function useContent(key, query, map, fallback) {
+export function useContent(path, map, fallback) {
   const [items, setItems] = useState(fallback)
-  const [loading, setLoading] = useState(isSupabaseConfigured)
+  const [loading, setLoading] = useState(isApiConfigured)
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return
+    if (!isApiConfigured) return
     let active = true
-    query(supabase).then(({ data, error }) => {
+    api(path).then(({ data, error }) => {
       if (!active) return
-      if (error) console.error(`[VPE] lecture ${key} :`, error)
-      else if (data?.length) setItems(data.map(map))
+      if (error) console.error(`[VPE] lecture ${path} :`, error)
+      else if (Array.isArray(data) && data.length) setItems(data.map(map))
       setLoading(false)
     })
     return () => { active = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [path])
 
   return { items, loading }
 }

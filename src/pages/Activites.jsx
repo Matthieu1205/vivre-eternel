@@ -33,11 +33,9 @@ const galerie_defaut = [
   { titre: "Conférence Intercession 2024", cat: "Conférence", count: 60 },
 ]
 
-// Charge les activités d'une catégorie depuis Supabase (contenu par défaut sinon).
+// Charge les activités d'une catégorie depuis l’API (contenu par défaut sinon).
 function useActivites(categorie, map, fallback) {
-  return useContent('activites-' + categorie,
-    db => db.from('activites').select('*').eq('categorie', categorie).order('id', { ascending: false }),
-    map, fallback).items
+  return useContent(`/public/activites?categorie=${categorie}`, map, fallback).items
 }
 
 const palette = ['#0284C7', '#0EA5E9', '#B8860B', '#DAA520', '#075985', '#38BDF8']

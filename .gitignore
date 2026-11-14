@@ -3,3 +3,12 @@ dist/
 .env
 .env.local
 .DS_Store
+
+# API o2switch : configuration et fichiers envoyés (jamais versionnés)
+api/config.php
+api/uploads/*
+!api/uploads/.htaccess
+
+# Archive de l’API à envoyer sur o2switch (générée)
+api-o2switch.zip
+api-o2switch/

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 
 const focusStyle = { borderColor: '#dc2626', boxShadow: '0 0 0 3px rgba(220,38,38,.12)' }
 const blurStyle  = { borderColor: '#e2e8f0', boxShadow: 'none' }
@@ -40,7 +40,8 @@ export default function AdminAnnonce() {
 
   async function loadRows() {
     setLoading(true)
-    const { data } = await supabase.from('annonces').select('*').order('date_debut', { ascending: false })
+    const { data, error } = await api('/admin/annonces')
+    if (error) alert('Chargement impossible : ' + error)
     setRows(data || [])
     setLoading(false)
   }
@@ -58,12 +59,12 @@ export default function AdminAnnonce() {
 
     setUploading(true)
     const ext      = file.name.split('.').pop()
-    const fileName = `annonces/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
-    const { error } = await supabase.storage.from('images').upload(fileName, file, { upsert: false })
-    if (error) { alert('Erreur upload : ' + error.message); setUploading(false); return }
+    const body = new FormData()
+    body.append('file', file, `annonce.${ext}`)
+    const { data, error } = await api('/admin/media/images', { method: 'POST', body })
+    if (error) { alert('Erreur upload : ' + error); setUploading(false); return }
 
-    const { data } = supabase.storage.from('images').getPublicUrl(fileName)
-    setForm(p => ({ ...p, image_url: data.publicUrl }))
+    setForm(p => ({ ...p, image_url: data.url }))
     setUploading(false)
   }
 
@@ -89,17 +90,17 @@ export default function AdminAnnonce() {
       date_debut: form.date_debut || null, date_fin: form.date_fin || null,
     }
     const { error } = editing === 'new'
-      ? await supabase.from('annonces').insert([data])
-      : await supabase.from('annonces').update(data).eq('id', form.id)
+      ? await api('/admin/annonces', { method: 'POST', body: data })
+      : await api(`/admin/annonces/${form.id}`, { method: 'PUT', body: data })
     setSaving(false)
-    if (error) { alert('Enregistrement impossible : ' + error.message); return }
+    if (error) { alert('Enregistrement impossible : ' + error); return }
     await loadRows(); cancelEdit()
   }
 
   async function del(id) {
     setDeleting(id)
-    const { error } = await supabase.from('annonces').delete().eq('id', id)
-    if (error) alert('Suppression impossible : ' + error.message)
+    const { error } = await api(`/admin/annonces/${id}`, { method: 'DELETE' })
+    if (error) alert('Suppression impossible : ' + error)
     else setRows(r => r.filter(x => x.id !== id))
     setDeleting(null); setConfirmDel(null)
   }

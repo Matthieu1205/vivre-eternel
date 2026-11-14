@@ -66,9 +66,7 @@ export const programmeFromDb = r => ({
 })
 
 export function useProgrammes() {
-  return useContent('programmes',
-    db => db.from('programmes').select('*').order('ordre').order('id'),
-    programmeFromDb, PROGS).items
+  return useContent('/public/programmes', programmeFromDb, PROGS).items
 }
 
 export default function Programmes() {

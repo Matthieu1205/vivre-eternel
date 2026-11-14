@@ -35,12 +35,9 @@ const versets_defaut = [
   { ref: "Ésaïe 40:31", texte: "Mais ceux qui se confient en l'Éternel renouvellent leur force. Ils prennent le vol comme les aigles.", theme: "Renouvellement" },
 ]
 
-// Charge les enseignements d'un type donné depuis Supabase (contenu par défaut sinon).
+// Charge les enseignements d'un type donné depuis l’API (contenu par défaut sinon).
 function useEnseignements(type, map, fallback) {
-  return useContent('enseignements-' + type,
-    db => db.from('enseignements').select('*').eq('type', type)
-      .order('date', { ascending: type === 'verset', nullsFirst: false }).order('id'),
-    map, fallback).items
+  return useContent(`/public/enseignements?type=${type}`, map, fallback).items
 }
 
 function AudioTab() {

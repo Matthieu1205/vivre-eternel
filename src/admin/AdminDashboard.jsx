@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 
 const stats = [
   { label: 'Programmes',   icon: 'fas fa-clipboard-list', color: '#0284C7', to: '/admin/programmes',    key: 'programmes' },
@@ -12,11 +12,11 @@ const stats = [
 
 // Ce qui attend une action de l'équipe.
 const todo = [
-  { label: 'Témoignages à modérer', icon: 'fas fa-comments',       color: '#D97706', to: '/admin/temoignages', table: 'temoignages',          filter: q => q.eq('statut', 'en_attente') },
-  { label: 'Messages de contact',   icon: 'fas fa-envelope',       color: '#0284C7', to: '/admin/messages',    table: 'messages_contact',     filter: q => q.eq('traite', false) },
-  { label: 'Demandes de prière',    icon: 'fas fa-hands-praying',  color: '#7C3AED', to: '/admin/messages',    table: 'demandes_priere',      filter: q => q.eq('traite', false) },
-  { label: 'Demandes de partenariat', icon: 'fas fa-handshake',    color: '#059669', to: '/admin/messages',    table: 'demandes_partenariat', filter: q => q.eq('traite', false) },
-  { label: 'Inscrits newsletter',   icon: 'fas fa-paper-plane',    color: '#475569', to: '/admin/messages',    table: 'newsletter',           filter: q => q },
+  { label: 'Témoignages à modérer', icon: 'fas fa-comments',       color: '#D97706', to: '/admin/temoignages', table: 'temoignages',          query: '?statut=en_attente' },
+  { label: 'Messages de contact',   icon: 'fas fa-envelope',       color: '#0284C7', to: '/admin/messages',    table: 'messages_contact',     query: '?traite=0' },
+  { label: 'Demandes de prière',    icon: 'fas fa-hands-praying',  color: '#7C3AED', to: '/admin/messages',    table: 'demandes_priere',      query: '?traite=0' },
+  { label: 'Demandes de partenariat', icon: 'fas fa-handshake',    color: '#059669', to: '/admin/messages',    table: 'demandes_partenariat', query: '?traite=0' },
+  { label: 'Inscrits newsletter',   icon: 'fas fa-paper-plane',    color: '#475569', to: '/admin/messages',    table: 'newsletter',           query: '' },
 ]
 
 function Card({ children, style }) {
@@ -29,10 +29,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function fetchCounts() {
-      const count = q => q.then(({ count }) => count ?? '–')
+      const count = path => api(path).then(({ data }) => data?.count ?? '–')
       const [a, b] = await Promise.all([
-        Promise.all(stats.map(s => count(supabase.from(s.key).select('*', { count: 'exact', head: true })))),
-        Promise.all(todo.map(t => count(t.filter(supabase.from(t.table).select('*', { count: 'exact', head: true }))))),
+        Promise.all(stats.map(s => count(`/admin/${s.key}/count`))),
+        Promise.all(todo.map(t => count(`/admin/${t.table}/count${t.query}`))),
       ])
       setCounts(Object.fromEntries(stats.map((s, i) => [s.key, a[i]])))
       setTodoCounts(Object.fromEntries(todo.map((t, i) => [t.label, b[i]])))

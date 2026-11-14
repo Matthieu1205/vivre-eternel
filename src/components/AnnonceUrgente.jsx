@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { api, isApiConfigured } from '../lib/api'
 
 const SESSION_KEY = 'vpe_annonce_dismissed'
 
@@ -11,14 +11,9 @@ export default function AnnonceUrgente() {
   useEffect(() => {
     async function check() {
       if (sessionStorage.getItem(SESSION_KEY)) return
-      const today = new Date().toISOString().slice(0, 10)
-      const { data } = await supabase
-        .from('annonces')
-        .select('*')
-        .lte('date_debut', today)
-        .gte('date_fin', today)
-        .order('created_at', { ascending: false })
-        .limit(1)
+      if (!isApiConfigured) return
+      // L'API ne renvoie que l'annonce en cours aujourd'hui.
+      const { data } = await api('/public/annonces')
       if (data?.length > 0) {
         setAnnonce(data[0])
         setTimeout(() => setVisible(true), 400)

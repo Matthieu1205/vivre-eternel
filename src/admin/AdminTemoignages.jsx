@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 
 export default function AdminTemoignages() {
   const [rows, setRows] = useState([])
@@ -10,21 +10,22 @@ export default function AdminTemoignages() {
 
   async function fetchData() {
     setLoading(true)
-    const { data } = await supabase.from('temoignages').select('*').order('created_at', { ascending: false })
+    const { data, error } = await api('/admin/temoignages')
+    if (error) alert('Chargement impossible : ' + error)
     setRows(data || [])
     setLoading(false)
   }
 
   async function updateStatus(id, statut) {
-    const { error } = await supabase.from('temoignages').update({ statut }).eq('id', id)
-    if (error) { alert('Mise à jour impossible : ' + error.message); return }
+    const { error } = await api(`/admin/temoignages/${id}`, { method: 'PUT', body: { statut } })
+    if (error) { alert('Mise à jour impossible : ' + error); return }
     setRows(r => r.map(x => x.id === id ? { ...x, statut } : x))
   }
 
   async function deleteRow(id) {
     if (!confirm('Supprimer définitivement ce témoignage ?')) return
-    const { error } = await supabase.from('temoignages').delete().eq('id', id)
-    if (error) { alert('Suppression impossible : ' + error.message); return }
+    const { error } = await api(`/admin/temoignages/${id}`, { method: 'DELETE' })
+    if (error) { alert('Suppression impossible : ' + error); return }
     setRows(r => r.filter(x => x.id !== id))
   }
 

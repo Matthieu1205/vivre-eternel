@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 
 const SUJETS = { priere: 'Demande de prière', info: 'Informations générales', partenariat: 'Partenariat', don: 'Don & Soutien', evenement: 'Événement', autre: 'Autre' }
 const TYPES_PARTENARIAT = { priant: 'Partenaire Priant', financier: 'Partenaire Financier', strategique: 'Partenaire Stratégique' }
@@ -58,16 +58,16 @@ export default function AdminMessages() {
 
   async function loadCounts() {
     const entries = await Promise.all(TABS.filter(t => t.id !== 'newsletter').map(async t => {
-      const { count } = await supabase.from(t.table).select('*', { count: 'exact', head: true }).eq('traite', false)
-      return [t.id, count || 0]
+      const { data } = await api(`/admin/${t.table}/count?traite=0`)
+      return [t.id, data?.count || 0]
     }))
     setCounts(Object.fromEntries(entries))
   }
 
   async function load() {
     setLoading(true)
-    const { data, error } = await supabase.from(tab.table).select('*').order('created_at', { ascending: false })
-    if (error) alert('Chargement impossible : ' + error.message)
+    const { data, error } = await api(`/admin/${tab.table}`)
+    if (error) alert('Chargement impossible : ' + error)
     setRows(data || [])
     setLoading(false)
   }
@@ -76,16 +76,16 @@ export default function AdminMessages() {
   useEffect(() => { loadCounts() }, [])
 
   async function toggleTraite(row) {
-    const { error } = await supabase.from(tab.table).update({ traite: !row.traite }).eq('id', row.id)
-    if (error) { alert('Mise à jour impossible : ' + error.message); return }
+    const { error } = await api(`/admin/${tab.table}/${row.id}`, { method: 'PUT', body: { traite: !row.traite } })
+    if (error) { alert('Mise à jour impossible : ' + error); return }
     setRows(r => r.map(x => x.id === row.id ? { ...x, traite: !row.traite } : x))
     loadCounts()
   }
 
   async function remove(row) {
     if (!confirm('Supprimer définitivement cet élément ? Cette action est irréversible.')) return
-    const { error } = await supabase.from(tab.table).delete().eq('id', row.id)
-    if (error) { alert('Suppression impossible : ' + error.message); return }
+    const { error } = await api(`/admin/${tab.table}/${row.id}`, { method: 'DELETE' })
+    if (error) { alert('Suppression impossible : ' + error); return }
     setRows(r => r.filter(x => x.id !== row.id))
     loadCounts()
   }

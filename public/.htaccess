@@ -1,0 +1,11 @@
+# Utilisé seulement si le site est hébergé sur o2switch (ignoré par Vercel).
+# Renvoie toutes les adresses du site (/programmes/couple, /admin…) vers index.html,
+# comme le fait vercel.json. Les vrais fichiers et dossiers (dont /api) sont servis tels quels.
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>

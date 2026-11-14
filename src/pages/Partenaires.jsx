@@ -96,9 +96,7 @@ const fromDb = r => {
 export default function Partenaires() {
   const { tab: urlTab } = useParams()
   const navigate = useNavigate()
-  const { items } = useContent('partenaires',
-    db => db.from('partenaires').select('*').order('ordre').order('id'),
-    fromDb, partenaires)
+  const { items } = useContent('/public/partenaires', fromDb, partenaires)
   const p = items.find(x => x.id === urlTab) || items[0]
   const active = p.id
 

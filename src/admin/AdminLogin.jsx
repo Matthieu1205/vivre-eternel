@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { isAdmin, login } from '../lib/adminAuth'
+import { isAdmin, login, needsSetup, setupFirstAdmin } from '../lib/adminAuth'
 
 const labelStyle = { fontSize: '.82rem', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '.4rem' }
 
@@ -9,17 +9,25 @@ export default function AdminLogin() {
   const [pwd, setPwd] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  // Première installation : aucun admin n'existe encore.
+  const [setupMode, setSetupMode] = useState(false)
+  const [setupToken, setSetupToken] = useState('')
   const navigate = useNavigate()
 
   // Déjà connecté en tant qu'admin → directement au tableau de bord.
   useEffect(() => {
-    isAdmin().then(ok => { if (ok) navigate('/admin/dashboard', { replace: true }) })
+    isAdmin().then(ok => {
+      if (ok) navigate('/admin/dashboard', { replace: true })
+      else needsSetup().then(setSetupMode)
+    })
   }, [navigate])
 
   const submit = async e => {
     e.preventDefault()
     setLoading(true)
-    const { error } = await login(email.trim(), pwd)
+    const { error } = setupMode
+      ? await setupFirstAdmin(setupToken.trim(), email.trim(), pwd)
+      : await login(email.trim(), pwd)
     setLoading(false)
     if (error) setError(error)
     else navigate('/admin/dashboard')
@@ -48,6 +56,25 @@ export default function AdminLogin() {
           <p style={{ color: '#64748b', fontSize: '.9rem', marginTop: '.35rem' }}>Vivre pour l'Éternel</p>
         </div>
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {setupMode && (
+            <>
+              <p style={{ margin: 0, padding: '.75rem 1rem', background: '#eff6ff', border: '1px solid #bae6fd', borderRadius: 10, color: '#075985', fontSize: '.85rem', lineHeight: 1.55 }}>
+                <strong>Première installation.</strong> Créez le compte administrateur avec le code
+                d’installation (<code>setup_token</code>) inscrit dans <code>config.php</code> sur le serveur.
+              </p>
+              <div>
+                <label style={labelStyle}>CODE D’INSTALLATION</label>
+                <input
+                  type="password"
+                  autoComplete="off"
+                  value={setupToken}
+                  onChange={e => { setSetupToken(e.target.value); setError('') }}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+            </>
+          )}
           <div>
             <label style={labelStyle}>EMAIL</label>
             <input
@@ -61,10 +88,11 @@ export default function AdminLogin() {
             />
           </div>
           <div>
-            <label style={labelStyle}>MOT DE PASSE</label>
+            <label style={labelStyle}>{setupMode ? 'MOT DE PASSE (10 CARACTÈRES MINIMUM)' : 'MOT DE PASSE'}</label>
             <input
               type="password"
-              autoComplete="current-password"
+              autoComplete={setupMode ? 'new-password' : 'current-password'}
+              minLength={setupMode ? 10 : undefined}
               value={pwd}
               onChange={e => { setPwd(e.target.value); setError('') }}
               placeholder="••••••••••"
@@ -82,7 +110,7 @@ export default function AdminLogin() {
               opacity: loading ? .7 : 1, transition: 'opacity .2s'
             }}
           >
-            {loading ? 'Connexion…' : 'Se connecter'}
+            {loading ? 'Connexion…' : setupMode ? 'Créer le compte admin' : 'Se connecter'}
           </button>
         </form>
         <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '.78rem', color: '#94a3b8' }}>

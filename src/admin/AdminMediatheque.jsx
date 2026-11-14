@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 
 const BUCKETS = [
   { id: 'images', label: 'Images', icon: 'fas fa-image', accept: 'image/*', color: '#0284C7' },
@@ -19,7 +19,7 @@ function FileCard({ file, bucket, onDelete, onCopy }) {
   const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(
     file.name.split('.').pop().toLowerCase()
   )
-  const publicUrl = supabase.storage.from(bucket).getPublicUrl(file.name).data.publicUrl
+  const publicUrl = file.url
 
   return (
     <div style={{
@@ -47,7 +47,7 @@ function FileCard({ file, bucket, onDelete, onCopy }) {
         <p style={{ margin: 0, fontSize: '.78rem', fontWeight: 700, color: '#0c1a2e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={file.name}>
           {file.name}
         </p>
-        <p style={{ margin: 0, fontSize: '.72rem', color: '#94a3b8' }}>{formatSize(file.metadata?.size)}</p>
+        <p style={{ margin: 0, fontSize: '.72rem', color: '#94a3b8' }}>{formatSize(file.size)}</p>
       </div>
 
       {/* Actions */}
@@ -87,10 +87,9 @@ export default function AdminMediatheque() {
   async function fetchFiles() {
     setLoading(true)
     setSearch('')
-    const { data, error } = await supabase.storage.from(activeBucket).list('', {
-      limit: 200, sortBy: { column: 'created_at', order: 'desc' }
-    })
-    if (!error) setFiles(data?.filter(f => f.name !== '.emptyFolderPlaceholder') || [])
+    const { data, error } = await api(`/admin/media/${activeBucket}`)
+    if (error) alert('Chargement impossible : ' + error)
+    else setFiles(data || [])
     setLoading(false)
   }
 
@@ -99,9 +98,10 @@ export default function AdminMediatheque() {
     const total = fileList.length
     let done = 0
     for (const file of fileList) {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const fileName = `${Date.now()}_${safeName}`
-      await supabase.storage.from(activeBucket).upload(fileName, file, { upsert: false })
+      const body = new FormData()
+      body.append('file', file)
+      const { error } = await api(`/admin/media/${activeBucket}`, { method: 'POST', body })
+      if (error) alert(`« ${file.name} » n’a pas été envoyé : ${error}`)
       done++
       setProgress(Math.round((done / total) * 100))
     }
@@ -112,7 +112,8 @@ export default function AdminMediatheque() {
 
   async function deleteFile(name) {
     if (!confirm(`Supprimer "${name}" ?`)) return
-    await supabase.storage.from(activeBucket).remove([name])
+    const { error } = await api(`/admin/media/${activeBucket}/${encodeURIComponent(name)}`, { method: 'DELETE' })
+    if (error) { alert('Suppression impossible : ' + error); return }
     setFiles(f => f.filter(x => x.name !== name))
   }
 

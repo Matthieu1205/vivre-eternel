@@ -1,0 +1,18 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Fichiers internes : jamais servis au navigateur.
+  RewriteRule ^(config\.php|config\.example\.php|src/|tools/|database/|README\.md) - [F,L]
+
+  # Les fichiers de la Médiathèque sont servis tels quels ; tout le reste passe par index.php.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# Protection supplémentaire si la réécriture d'URL est indisponible.
+<FilesMatch "^(config\.php|config\.example\.php|README\.md)$">
+  Require all denied
+</FilesMatch>

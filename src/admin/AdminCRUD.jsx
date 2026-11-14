@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 
 const focusStyle = { borderColor: '#0284C7', boxShadow: '0 0 0 3px rgba(2,132,199,.12)' }
 const blurStyle  = { borderColor: '#e2e8f0', boxShadow: 'none' }
@@ -27,8 +27,9 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
 
   async function fetchData() {
     setLoading(true)
-    const { data, error } = await supabase.from(tableName).select('*').order('created_at', { ascending: false })
-    if (!error) setRows(data || [])
+    const { data, error } = await api(`/admin/${tableName}`)
+    if (error) alert(`Chargement impossible : ${error}`)
+    else setRows(data || [])
     setLoading(false)
   }
 
@@ -50,17 +51,17 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
     setSaving(true)
     setError('')
     const { error } = editing === 'new'
-      ? await supabase.from(tableName).insert([payload()])
-      : await supabase.from(tableName).update(payload()).eq('id', form.id)
-    if (error) setError(error.message)
+      ? await api(`/admin/${tableName}`, { method: 'POST', body: payload() })
+      : await api(`/admin/${tableName}/${form.id}`, { method: 'PUT', body: payload() })
+    if (error) setError(error)
     else { fetchData(); cancelEdit() }
     setSaving(false)
   }
 
   async function deleteRow(id) {
     setDeleting(id)
-    const { error } = await supabase.from(tableName).delete().eq('id', id)
-    if (error) alert(`Suppression impossible : ${error.message}`)
+    const { error } = await api(`/admin/${tableName}/${id}`, { method: 'DELETE' })
+    if (error) alert(`Suppression impossible : ${error}`)
     else setRows(r => r.filter(x => x.id !== id))
     setDeleting(null)
     setConfirmDel(null)

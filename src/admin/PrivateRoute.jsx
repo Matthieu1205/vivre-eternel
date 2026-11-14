@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import { isAdmin } from '../lib/adminAuth'
 
 export default function PrivateRoute({ children }) {
@@ -9,10 +8,10 @@ export default function PrivateRoute({ children }) {
   useEffect(() => {
     let active = true
     isAdmin().then(ok => { if (active) setAllowed(ok) })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
-      if (event === 'SIGNED_OUT' && active) setAllowed(false)
-    })
-    return () => { active = false; subscription.unsubscribe() }
+    // Déconnexion, ou jeton expiré détecté lors d'un appel à l'API.
+    const onLogout = () => { if (active) setAllowed(false) }
+    window.addEventListener('vpe-logout', onLogout)
+    return () => { active = false; window.removeEventListener('vpe-logout', onLogout) }
   }, [])
 
   if (allowed === null) {
