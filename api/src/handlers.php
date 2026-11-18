@@ -17,6 +17,9 @@ function public_list(string $name): never
         case 'partenaires':
             $order = 'ordre ASC, id ASC';
             break;
+        case 'temoignages_video':
+            $order = 'ordre ASC, id DESC';
+            break;
         case 'enseignements':
             $type = (string) ($_GET['type'] ?? '');
             if ($type !== '') {
@@ -53,6 +56,64 @@ function public_list(string $name): never
     $sql = "SELECT $columns FROM $name" . ($where ? ' WHERE ' . implode(' AND ', $where) : '') . " ORDER BY $order LIMIT $limit";
     $rows = query($sql, $params)->fetchAll();
     send_json(array_map(fn($r) => present($r), $rows));
+}
+
+// ─────────────────────────────────────────────────────────────
+// Textes des pages (« Pages du site » dans le backoffice)
+// Chaque clé contient seulement les champs modifiés ; le site complète
+// avec ses textes d'origine.
+// ─────────────────────────────────────────────────────────────
+const CONTENU_MAX_BYTES = 500000;
+
+function contenu_key(string $key): string
+{
+    if (!preg_match('/^[a-z0-9][a-z0-9_.-]{0,99}$/', $key)) {
+        throw new HttpError(404, 'Section inconnue.');
+    }
+    return $key;
+}
+
+function contenus_all(): array
+{
+    $out = [];
+    foreach (query('SELECT cle, valeur FROM contenus')->fetchAll() as $row) {
+        $value = json_decode((string) $row['valeur'], true);
+        if (is_array($value)) {
+            $out[$row['cle']] = $value;
+        }
+    }
+    return $out;
+}
+
+function public_contenus(): never
+{
+    send_json((object) contenus_all());
+}
+
+function admin_contenu_save(string $key): never
+{
+    require_admin();
+    $key = contenu_key($key);
+    $value = request_body()['valeur'] ?? null;
+    if (!is_array($value)) {
+        throw new HttpError(422, 'Contenu invalide.');
+    }
+    $json = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($json === false || strlen($json) > CONTENU_MAX_BYTES) {
+        throw new HttpError(422, 'Contenu trop volumineux.');
+    }
+    query(
+        'INSERT INTO contenus (cle, valeur) VALUES (?, ?) ON DUPLICATE KEY UPDATE valeur = VALUES(valeur)',
+        [$key, $json]
+    );
+    send_json(['ok' => true, 'cle' => $key, 'valeur' => $value]);
+}
+
+function admin_contenu_reset(string $key): never
+{
+    require_admin();
+    query('DELETE FROM contenus WHERE cle = ?', [contenu_key($key)]);
+    send_json(['ok' => true]);
 }
 
 // ─────────────────────────────────────────────────────────────

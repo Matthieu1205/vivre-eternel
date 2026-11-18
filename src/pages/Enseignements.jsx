@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useContent, formatDate } from '../lib/data'
+import { PageHero } from '../lib/content'
 
 const messages_audio_defaut = [
   { titre: "La Puissance de la Prière Fervente", predicateur: "Frère Christian Gballou", duree: "52 min", date: "12 Jan 2025", serie: "Fondements" },
@@ -193,14 +194,7 @@ export default function Enseignements() {
 
   return (
     <>
-      <div className="page-hero">
-        <div className="container">
-          <div className="breadcrumb"><a href="/">Accueil</a> › <span>Enseignements</span></div>
-          <div className="page-hero-eyebrow"><i className="fas fa-book-open" style={{ marginRight: '.4rem' }} /> La Parole Vivante</div>
-          <h1>Enseignements</h1>
-          <p>Nourrissez votre foi avec des messages puissants, des articles inspirants et les versets du jour.</p>
-        </div>
-      </div>
+      <PageHero section="enseignements.hero" crumb="Enseignements" icon="fas fa-book-open" />
       <section className="section">
         <div className="container"><Component /></div>
       </section>

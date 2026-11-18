@@ -19,8 +19,8 @@ const fields = [
   { key: 'points', label: 'Ce que vous recevrez', type: 'textarea', placeholder: 'Enseignement de la Parole\nPrière en couple', help: 'Un point par ligne.' },
   { key: 'verse_text', label: 'Verset biblique (texte)', type: 'textarea', placeholder: 'Ce que Dieu a uni…' },
   { key: 'verse_ref', label: 'Référence du verset', placeholder: 'Matthieu 19:6' },
-  { key: 'banner_url', label: 'Bannière (URL de l’image)', placeholder: 'https://… (copiez le lien depuis la Médiathèque)' },
-  { key: 'logo_url', label: 'Logo (URL de l’image)', placeholder: 'https://…' },
+  { key: 'banner_url', type: 'image', label: 'Bannière', placeholder: '' },
+  { key: 'logo_url', type: 'image', label: 'Logo', placeholder: '' },
 ]
 
 const defaultRow = { label: '', slug: '', ordre: '', icon: 'fas fa-fire', horaire: '', description: '', detail: '', points: '', verse_text: '', verse_ref: '', banner_url: '', logo_url: '' }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { submitForm, useContent, formatDate } from '../lib/data'
 import FormError from '../components/FormError'
+import { PageHero, Paragraphs, Verse, useSection } from '../lib/content'
 
 const temoignages_ecrits = [
   { nom: "Grace A.", lieu: "Abidjan", date: "Jan 2025", cat: "Guérison", texte: "J'étais diagnostiquée avec une maladie grave que les médecins jugeaient incurable. Après des mois de prière avec l'équipe d'intercession de VPE, j'ai été examinée à nouveau — les médecins étaient stupéfaits. Dieu est réel et il guérit encore aujourd'hui.", emoji: "fas fa-hospital" },
@@ -9,13 +10,6 @@ const temoignages_ecrits = [
   { nom: "Mariama T.", lieu: "Dakar, Sénégal", date: "Nov 2024", cat: "Délivrance", texte: "Pendant 3 ans j'ai vécu sous un joug invisible que je ne comprenais pas. La session de délivrance a été un tournant radical. J'ai ressenti quelque chose partir de moi. La liberté que je vis aujourd'hui est inexplicable autrement que par la puissance du Nom de Jésus.", emoji: "fas fa-unlock" },
   { nom: "Emmanuel K.", lieu: "Abidjan", date: "Oct 2024", cat: "Provision", texte: "Chômeur depuis 18 mois, j'avais perdu espoir. Une prière soumise au mur d'intercession en août... deux semaines plus tard j'avais une offre d'emploi que je n'avais même pas cherchée. Dieu pourvoit selon ses richesses.", emoji: "fas fa-briefcase" },
   { nom: "Christelle B.", lieu: "France", date: "Sep 2024", cat: "Restauration", texte: "Depuis l'étranger, j'ai suivi les enseignements en ligne et soumis une demande de prière. Ma dépression sévère qui durait depuis 2 ans a commencé à se lever progressivement. La Parole de Dieu est vraiment une lampe pour mes pieds.", emoji: "fas fa-leaf" },
-]
-
-const temoignages_video = [
-  { nom: "Frère Paul M.", duree: "8 min", cat: "Guérison", desc: "Comment Dieu m'a sauvé d'une mort certaine après un accident grave." },
-  { nom: "Sœur Rachel O.", duree: "12 min", cat: "Famille", desc: "Restauration miraculeuse d'une famille au bord du divorce." },
-  { nom: "Frère Josué T.", duree: "6 min", cat: "Conversion", desc: "Du fétichisme à la foi : mon chemin vers Jésus-Christ." },
-  { nom: "Sœur Adèle K.", duree: "10 min", cat: "Délivrance", desc: "15 ans sous l'emprise de liens occultes — comment j'ai été libérée." },
 ]
 
 const catIcons = { Guérison: 'fas fa-hospital', Famille: 'fas fa-users', Délivrance: 'fas fa-unlock', Provision: 'fas fa-briefcase', Restauration: 'fas fa-leaf', Conversion: 'fas fa-cross' }
@@ -66,33 +60,63 @@ function EcritsTab() {
   )
 }
 
+const videoFromDb = r => ({ nom: r.nom, duree: r.duree, cat: r.categorie, desc: r.description, url: r.url })
+
+/** Lien YouTube → adresse d'intégration ; sinon null. */
+function youtubeEmbed(url) {
+  const m = String(url || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/)
+  return m ? `https://www.youtube-nocookie.com/embed/${m[1]}` : null
+}
+const isVideoFile = url => /\.(mp4|webm|ogg)(\?|$)/i.test(String(url || ''))
+
 function VideoTestimTab() {
+  const c = useSection('temoignages.video')
+  const { items } = useContent('/public/temoignages_video', videoFromDb, [])
   return (
     <div>
-      <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.5rem', marginBottom: '.5rem' }}>Témoignages Vidéo</h3>
-      <p style={{ color: 'var(--text2)', marginBottom: '1.75rem' }}>Regardez et soyez encouragés — ce que Dieu a fait pour eux, il peut le faire pour vous.</p>
+      <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.5rem', marginBottom: '.5rem' }}>{c.titre}</h3>
+      <Paragraphs text={c.texte} style={{ color: 'var(--text2)', marginBottom: '1.75rem' }} />
+      {items.length === 0 && (
+        <p style={{ color: 'var(--text2)', fontStyle: 'italic' }}>Les témoignages vidéo seront bientôt disponibles.</p>
+      )}
       <div className="card-grid">
-        {temoignages_video.map((v, i) => (
-          <div key={i} className="card reveal" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ background: `linear-gradient(135deg, hsl(${i * 60 + 200}, 70%, 35%), hsl(${i * 60 + 220}, 70%, 55%))`, height: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', position: 'relative' }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', backdropFilter: 'blur(4px)' }}>
-                <i className="fas fa-play" style={{ marginLeft: 4 }} />
+        {items.map((v, i) => {
+          const embed = youtubeEmbed(v.url)
+          return (
+            <div key={i} className="card reveal" style={{ padding: 0, overflow: 'hidden' }}>
+              {embed ? (
+                <iframe src={embed} title={v.nom} style={{ width: '100%', height: 180, border: 0, display: 'block' }}
+                  allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" />
+              ) : isVideoFile(v.url) ? (
+                <video src={v.url} controls preload="metadata" style={{ width: '100%', height: 180, display: 'block', background: '#000' }} />
+              ) : (
+                <a href={v.url || undefined} target="_blank" rel="noopener noreferrer"
+                  style={{ background: `linear-gradient(135deg, hsl(${i * 60 + 200}, 70%, 35%), hsl(${i * 60 + 220}, 70%, 55%))`, height: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', position: 'relative', textDecoration: 'none', cursor: v.url ? 'pointer' : 'default' }}>
+                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', backdropFilter: 'blur(4px)' }}>
+                    <i className="fas fa-play" style={{ marginLeft: 4 }} />
+                  </div>
+                  {v.duree && <span style={{ position: 'absolute', bottom: 10, right: 12, background: 'rgba(0,0,0,.5)', fontSize: '.72rem', padding: '.15rem .5rem', borderRadius: 4 }}>{v.duree}</span>}
+                  {v.cat && <span style={{ position: 'absolute', top: 10, left: 12, background: 'rgba(255,255,255,.15)', fontSize: '.7rem', padding: '.15rem .5rem', borderRadius: 4 }}>{v.cat}</span>}
+                </a>
+              )}
+              <div style={{ padding: '1.1rem 1.25rem' }}>
+                <h4 style={{ color: 'var(--text)', fontSize: '.95rem', marginBottom: '.35rem' }}>{v.nom}</h4>
+                {(embed || isVideoFile(v.url)) && (v.cat || v.duree) && (
+                  <p style={{ fontSize: '.75rem', color: 'var(--blue)', fontWeight: 600, margin: '0 0 .35rem' }}>{[v.cat, v.duree].filter(Boolean).join(' · ')}</p>
+                )}
+                {v.desc && <p style={{ fontSize: '.82rem', color: 'var(--text2)', margin: 0 }}>{v.desc}</p>}
               </div>
-              <span style={{ position: 'absolute', bottom: 10, right: 12, background: 'rgba(0,0,0,.5)', fontSize: '.72rem', padding: '.15rem .5rem', borderRadius: 4 }}>{v.duree}</span>
-              <span style={{ position: 'absolute', top: 10, left: 12, background: 'rgba(255,255,255,.15)', fontSize: '.7rem', padding: '.15rem .5rem', borderRadius: 4 }}>{v.cat}</span>
             </div>
-            <div style={{ padding: '1.1rem 1.25rem' }}>
-              <h4 style={{ color: 'var(--text)', fontSize: '.95rem', marginBottom: '.35rem' }}>{v.nom}</h4>
-              <p style={{ fontSize: '.82rem', color: 'var(--text2)', margin: 0 }}>{v.desc}</p>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
 }
 
 function PartagerTab() {
+  const c = useSection('temoignages.partager')
+  const categories = c.categories || []
   const empty = { nom: '', email: '', lieu: '', categorie: '', temoignage: '', publier: true }
   const [form, setForm] = useState(empty)
   const [status, setStatus] = useState('')
@@ -126,14 +150,11 @@ function PartagerTab() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '3rem', alignItems: 'start' }}>
       <div>
-        <h3 style={{ fontFamily: 'var(--fs)', marginBottom: '1rem' }}>Votre Témoignage Compte</h3>
-        <p style={{ color: 'var(--text2)', marginBottom: '1.5rem' }}>Ce que Dieu a accompli dans votre vie peut donner de l&apos;espérance à quelqu&apos;un d&apos;autre. Ne gardez pas ce trésor pour vous.</p>
-        <div className="verse-block">
-          <p>Ils l&apos;ont vaincu à cause du sang de l&apos;Agneau et à cause de la parole de leur témoignage.</p>
-          <cite>Apocalypse 12:11</cite>
-        </div>
+        <h3 style={{ fontFamily: 'var(--fs)', marginBottom: '1rem' }}>{c.titre}</h3>
+        <Paragraphs text={c.texte} style={{ color: 'var(--text2)', marginBottom: '1.5rem' }} />
+        <Verse text={c.verse_text} cite={c.verse_ref} />
         <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
-          {['Guérison miraculeuse', 'Restauration familiale', 'Délivrance', 'Provision divine', 'Conversion', 'Autre grâce'].map(c => (
+          {categories.map(c => (
             <div key={c} style={{ display: 'flex', alignItems: 'center', gap: '.75rem', cursor: 'pointer' }}
               onClick={() => setForm(f => ({ ...f, categorie: c }))}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: form.categorie === c ? 'var(--blue)' : 'var(--border)', transition: 'background .2s', flexShrink: 0 }} />
@@ -162,7 +183,7 @@ function PartagerTab() {
             <label>Catégorie</label>
             <select name="categorie" value={form.categorie} onChange={up}>
               <option value="">Choisir une catégorie</option>
-              {['Guérison', 'Famille', 'Délivrance', 'Provision', 'Restauration', 'Conversion', 'Autre'].map(c => <option key={c} value={c}>{c}</option>)}
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
@@ -199,14 +220,7 @@ export default function Temoignages() {
 
   return (
     <>
-      <div className="page-hero">
-        <div className="container">
-          <div className="breadcrumb"><a href="/">Accueil</a> › <span>Témoignages</span></div>
-          <div className="page-hero-eyebrow"><i className="fas fa-star" style={{ marginRight: '.4rem' }} /> Grâces Reçues</div>
-          <h1>Témoignages</h1>
-          <p>Des vies transformées par la puissance de Dieu. Chaque témoignage est une déclaration de sa gloire.</p>
-        </div>
-      </div>
+      <PageHero section="temoignages.hero" crumb="Témoignages" icon="fas fa-star" />
       <section className="section">
         <div className="container"><Component /></div>
       </section>

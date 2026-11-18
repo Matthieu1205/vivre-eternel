@@ -42,8 +42,39 @@ function db(): PDO
         );
         // Toutes les dates sont stockées et renvoyées en UTC.
         $pdo->exec("SET time_zone = '+00:00'");
+        ensure_schema($pdo);
     }
     return $pdo;
+}
+
+/**
+ * Crée les tables ajoutées après l'installation initiale, sans passer par phpMyAdmin.
+ * Un fichier témoin évite de refaire la vérification à chaque requête.
+ */
+const SCHEMA_VERSION = 2;
+
+function ensure_schema(PDO $pdo): void
+{
+    $marker = __DIR__ . '/../uploads/.schema-' . SCHEMA_VERSION;
+    if (is_file($marker)) {
+        return;
+    }
+    $pdo->exec("CREATE TABLE IF NOT EXISTS contenus (
+        cle VARCHAR(100) PRIMARY KEY,
+        valeur MEDIUMTEXT NOT NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS temoignages_video (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        nom VARCHAR(160) NOT NULL,
+        categorie VARCHAR(60) NULL,
+        description TEXT NULL,
+        url VARCHAR(500) NULL,
+        duree VARCHAR(60) NULL,
+        ordre INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    @file_put_contents($marker, (string) SCHEMA_VERSION);
 }
 
 /** Exécute une requête préparée et renvoie le PDOStatement. */

@@ -43,7 +43,7 @@ const fields = [
   { key: 'ames',          label: 'Âmes touchées (terrain)',  type: 'number' },
   { key: 'beneficiaires', label: 'Bénéficiaires (social)',   type: 'number' },
   { key: 'nb_photos',     label: 'Nombre de photos (galerie)', type: 'number' },
-  { key: 'image_url',     label: 'Lien image (URL)',    placeholder: 'https://…' },
+  { key: 'image_url', type: 'image', label: 'Image', placeholder: '' },
 ]
 
 const defaultRow = { categorie: 'terrain', titre: '', description: '', date: '', heure: '', lieu: '', type: '', icon: '', participants: '', ames: '', beneficiaires: '', nb_photos: '', image_url: '' }

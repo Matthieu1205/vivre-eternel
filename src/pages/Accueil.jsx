@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useSection } from '../lib/content'
 
 function HeroCanvas() {
   const ref = useRef(null)
@@ -37,13 +38,33 @@ function HeroCanvas() {
   return <canvas ref={ref} className="home-hero-canvas" style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
 }
 
-const overviews = [
-  { icon: 'fas fa-hands-praying', title: 'Prière & Intercession', desc: "Un mur de prière permanent pour les familles, malades et nations. Des percées surviennent chaque semaine.", link: '/priere' },
-  { icon: 'fas fa-fire', title: 'Nos Programmes', desc: "6 programmes spirituels puissants : intercession, délivrance, évangélisation, louange, restauration et famille.", link: '/programmes' },
-  { icon: 'fas fa-comment', title: 'Témoignages', desc: "Des vies transformées par la puissance de Dieu. Découvrez les témoignages de grâce de notre communauté.", link: '/temoignages' },
-]
+/** Compte à rebours jusqu'à la date saisie dans le backoffice (00 si aucune date). */
+function useCountdown(date) {
+  const target = date ? new Date(date).getTime() : NaN
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (Number.isNaN(target)) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [target])
+  const left = Number.isNaN(target) ? 0 : Math.max(0, Math.floor((target - now) / 1000))
+  const pad = n => String(n).padStart(2, '0')
+  return [
+    { v: pad(Math.floor(left / 86400)), u: 'Jours' },
+    { v: pad(Math.floor(left / 3600) % 24), u: 'Heures' },
+    { v: pad(Math.floor(left / 60) % 60), u: 'Minutes' },
+    { v: pad(left % 60), u: 'Secondes' },
+  ]
+}
 
 export default function Accueil() {
+  const hero = useSection('accueil.hero')
+  const { chiffres = [] } = useSection('accueil.chiffres')
+  const act = useSection('accueil.activites')
+  const verset = useSection('accueil.verset')
+  const veillee = useSection('accueil.veillee')
+  const countdown = useCountdown(veillee.date)
+
   return (
     <>
       {/* HERO */}
@@ -52,13 +73,13 @@ export default function Accueil() {
         <div className="home-hero-overlay" />
         <div className="home-hero-content">
           <span className="home-hero-eyebrow">
-            <i className="fas fa-cross" /> Ministère de Feu et de Résurrection · Fraternité des Disciples de Jésus-Christ
+            <i className="fas fa-cross" /> {hero.eyebrow}
           </span>
           <h1 className="home-hero-title">
-            Vivre pour<br /><span>l&apos;Éternel</span>
+            {hero.titre1}<br /><span>{hero.titre2}</span>
           </h1>
-          <p className="home-hero-sub">Parce que ta vie a un sens éternel.</p>
-          <p className="home-hero-verse">« Je suis le chemin, la vérité et la vie. » — Jean 14:6</p>
+          {hero.sous_titre && <p className="home-hero-sub">{hero.sous_titre}</p>}
+          {hero.verset && <p className="home-hero-verse">{hero.verset}</p>}
           <div className="home-hero-btns">
             <Link to="/a-propos" className="btn btn-white">
               <i className="fas fa-compass" /> Formulaire d'adhésion
@@ -68,9 +89,9 @@ export default function Accueil() {
             </Link>
           </div>
           <div className="home-hero-badges">
-            <span><i className="fas fa-globe" /> Familles touchées</span>
-            <span><i className="fas fa-users" /> 500+ Vies transformées</span>
-            <span><i className="fas fa-church" /> 10+ Ans de ministère</span>
+            {(hero.badges || []).map((b, i) => (
+              <span key={b}><i className={['fas fa-globe', 'fas fa-users', 'fas fa-church'][i % 3]} /> {b}</span>
+            ))}
           </div>
         </div>
         <div className="hero-scroll">
@@ -83,15 +104,10 @@ export default function Accueil() {
       <div className="stats-band">
         <div className="container">
           <div className="stats-grid">
-            {[
-              { n: '500+', l: 'Vies Touchées' },
-              { n: '10+', l: 'Années de Ministère' },
-              { n: '6', l: 'Programmes Actifs' },
-              { n: '3+', l: 'Nations Touchées' },
-            ].map((s, i) => (
+            {chiffres.map((s, i) => (
               <div key={i} className="stat-item">
-                <span className="stat-num">{s.n}</span>
-                <span className="stat-label">{s.l}</span>
+                <span className="stat-num">{s.nombre}</span>
+                <span className="stat-label">{s.libelle}</span>
               </div>
             ))}
           </div>
@@ -101,18 +117,22 @@ export default function Accueil() {
       {/* OVERVIEW */}
       <section className="section">
         <div className="container" style={{ textAlign: 'center' }}>
-          <span className="section-label reveal">Ce que nous faisons</span>
-          <h2 className="section-title reveal">Un Ministère au <span>Cœur Battant</span></h2>
-          <p className="section-sub reveal">Des espaces de rencontre avec Dieu, soi-même et les autres.</p>
+          {act.label && <span className="section-label reveal">{act.label}</span>}
+          <h2 className="section-title reveal">
+            {String(act.titre || '').split(/\*\*([^*]+)\*\*/).map((part, i) => i % 2 ? <span key={i}>{part}</span> : part)}
+          </h2>
+          {act.sous_titre && <p className="section-sub reveal">{act.sous_titre}</p>}
           <div className="overview-grid">
-            {overviews.map((o, i) => (
-              <div key={i} className={`overview-card reveal delay-${i+1}`}>
+            {(act.cartes || []).map((o, i) => (
+              <div key={i} className={`overview-card reveal delay-${(i % 3) + 1}`}>
                 <div className="overview-card-icon"><i className={o.icon} /></div>
-                <h3>{o.title}</h3>
-                <p>{o.desc}</p>
-                <Link to={o.link} className="btn btn-outline" style={{ fontSize: '.78rem', padding: '.55rem 1.1rem' }}>
-                  <i className="fas fa-arrow-right" /> En savoir plus
-                </Link>
+                <h3>{o.titre}</h3>
+                <p>{o.texte}</p>
+                {o.lien && (
+                  <Link to={o.lien} className="btn btn-outline" style={{ fontSize: '.78rem', padding: '.55rem 1.1rem' }}>
+                    <i className="fas fa-arrow-right" /> En savoir plus
+                  </Link>
+                )}
               </div>
             ))}
           </div>
@@ -124,10 +144,10 @@ export default function Accueil() {
         <div className="container">
           <div className="reveal" style={{ fontSize: '2rem', color: 'rgba(255,255,255,.3)', marginBottom: '.75rem' }}><i className="fas fa-cross" /></div>
           <h2 className="section-title light reveal" style={{ fontStyle: 'italic', maxWidth: 720, margin: '0 auto 1rem' }}>
-            « Ce n&apos;est pas par une armée ni par la force, mais c&apos;est par mon Esprit »
+            {verset.verse_text}
           </h2>
           <p className="reveal" style={{ color: 'rgba(255,255,255,.7)', letterSpacing: '.12em', textTransform: 'uppercase', fontSize: '.82rem' }}>
-            Zacharie 4:6
+            {verset.verse_ref}
           </p>
           <div className="reveal" style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/a-propos" className="btn btn-white">
@@ -143,12 +163,12 @@ export default function Accueil() {
       {/* COUNTDOWN MINI */}
       <section className="countdown-section">
         <div className="container">
-          <span className="countdown-label">Prochaine Veillée de Prière</span>
+          <span className="countdown-label">{veillee.label}</span>
           <h2 className="section-title light reveal" style={{ textAlign: 'center' }}>
-            Rejoignez-nous pour une nuit de gloire
+            {veillee.titre}
           </h2>
           <div className="countdown-grid">
-            {[{ v: '00', u: 'Jours' }, { v: '00', u: 'Heures' }, { v: '00', u: 'Minutes' }, { v: '00', u: 'Secondes' }].map(c => (
+            {countdown.map(c => (
               <div key={c.u} className="cd-box">
                 <span className="cd-num">{c.v}</span>
                 <span className="cd-unit">{c.u}</span>

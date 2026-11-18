@@ -61,6 +61,13 @@ function resources(): array
                 'date_fin' => date_field(true), 'image_url' => str(500),
             ],
         ],
+        'temoignages_video' => [
+            'admin_order' => 'ordre ASC, id DESC',
+            'fields' => [
+                'nom' => str(160, true), 'categorie' => str(60), 'description' => txt(),
+                'url' => str(500), 'duree' => str(60), 'ordre' => int_field(),
+            ],
+        ],
         'temoignages' => [
             'admin_order' => 'created_at DESC, id DESC',
             'fields' => [

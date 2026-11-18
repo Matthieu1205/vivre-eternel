@@ -1,38 +1,38 @@
 import { Link } from 'react-router-dom'
-
-const TEL1 = '+2250546457742'
-const TEL2 = '+2250709045707'
-
-const cols = {
-  'Ministère': [
-    { to: '/a-propos', label: 'À Propos' },
-    { to: '/programmes', label: 'Programmes' },
-    { to: '/enseignements', label: 'Enseignements' },
-    { to: '/activites', label: 'Activités' },
-    { to: '/partenaires', label: 'Partenaires' },
-  ],
-  "S'impliquer": [
-    { to: '/priere', label: 'Prière & Intercession' },
-    { to: '/temoignages', label: 'Témoignages' },
-    { to: '/soutenir', label: "Soutenir l'Œuvre" },
-    { href: `https://wa.me/${TEL1}`, label: 'WhatsApp', icon: 'fab fa-whatsapp' },
-  ],
-  'Contact': [
-    { to: '/contact', label: 'Formulaire de contact' },
-    { href: `tel:${TEL1}`, label: '05 46 45 77 42', icon: 'fas fa-phone' },
-    { href: `tel:${TEL2}`, label: '07 09 04 57 07', icon: 'fas fa-phone' },
-  ],
-}
-
-const socials = [
-  { icon: 'fab fa-facebook-f', url: '#', label: 'Facebook' },
-  { icon: 'fab fa-youtube', url: '#', label: 'YouTube' },
-  { icon: 'fab fa-instagram', url: '#', label: 'Instagram' },
-  { icon: 'fab fa-whatsapp', url: `https://wa.me/${TEL1}`, label: 'WhatsApp' },
-]
+import { Inline, useCoordonnees, useSection } from '../lib/content'
 
 export default function Footer() {
   const year = new Date().getFullYear()
+  const coord = useCoordonnees()
+  const pied = useSection('site.pied')
+  const { reseaux = [] } = useSection('site.reseaux')
+  const shortTel = t => String(t || '').replace(/^\+225\s*/, '')
+
+  const cols = {
+    'Ministère': [
+      { to: '/a-propos', label: 'À Propos' },
+      { to: '/programmes', label: 'Programmes' },
+      { to: '/enseignements', label: 'Enseignements' },
+      { to: '/activites', label: 'Activités' },
+      { to: '/partenaires', label: 'Partenaires' },
+    ],
+    "S'impliquer": [
+      { to: '/priere', label: 'Prière & Intercession' },
+      { to: '/temoignages', label: 'Témoignages' },
+      { to: '/soutenir', label: "Soutenir l'Œuvre" },
+      { href: coord.waLink(''), label: 'WhatsApp', icon: 'fab fa-whatsapp' },
+    ],
+    'Contact': [
+      { to: '/contact', label: 'Formulaire de contact' },
+      coord.tel1 && { href: coord.telHref1, label: shortTel(coord.tel1), icon: 'fas fa-phone' },
+      coord.tel2 && { href: coord.telHref2, label: shortTel(coord.tel2), icon: 'fas fa-phone' },
+    ].filter(Boolean),
+  }
+  // Réseaux avec un lien renseigné, puis WhatsApp.
+  const socials = [
+    ...reseaux.filter(r => r.url && !/whatsapp/i.test(r.nom)).map(r => ({ icon: r.icon, url: r.url, label: r.nom })),
+    { icon: 'fab fa-whatsapp', url: coord.waLink(''), label: 'WhatsApp' },
+  ]
   return (
     <footer className="footer">
       <div className="container">
@@ -42,22 +42,20 @@ export default function Footer() {
               <img src="/logo.png" alt="Vivre pour l'Éternel" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,.25)' }} />
             </div>
             <p className="footer-tagline" style={{ fontSize: '.8rem', lineHeight: 1.5, color: 'rgba(255,255,255,.7)', marginBottom: '.75rem' }}>
-              Ministère de Feu et de Résurrection<br />
-              Fraternité des Disciples de Jésus-Christ
+              <Inline text={pied.tagline} />
             </p>
             <p style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.5)', lineHeight: 1.6 }}>
-              <i className="fas fa-map-marker-alt" style={{ marginRight: '.4rem' }} />Modeste Nouveau Goudron<br />
-              Ancienne Route de Bassam, Abidjan
+              <i className="fas fa-map-marker-alt" style={{ marginRight: '.4rem' }} /><Inline text={coord.adresse} />
             </p>
-            <div className="verse-block" style={{ marginTop: '1.25rem', background: 'rgba(255,255,255,.06)', borderLeftColor: 'var(--gold2)' }}>
-              <p style={{ color: 'rgba(255,255,255,.8)', fontSize: '.88rem', margin: '0 0 .35rem' }}>
-                « Je suis le chemin, la vérité et la vie. »
-              </p>
-              <cite style={{ color: 'var(--gold2)' }}>Jean 14:6</cite>
-            </div>
+            {pied.verse_text && (
+              <div className="verse-block" style={{ marginTop: '1.25rem', background: 'rgba(255,255,255,.06)', borderLeftColor: 'var(--gold2)' }}>
+                <p style={{ color: 'rgba(255,255,255,.8)', fontSize: '.88rem', margin: '0 0 .35rem' }}>{pied.verse_text}</p>
+                <cite style={{ color: 'var(--gold2)' }}>{pied.verse_ref}</cite>
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '.65rem', marginTop: '1.25rem' }}>
               {socials.map(s => (
-                <a key={s.label} href={s.url} aria-label={s.label} className="social-link"
+                <a key={s.label} href={s.url} aria-label={s.label} target="_blank" rel="noopener noreferrer" className="social-link"
                    style={{ borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.6)' }}>
                   <i className={s.icon} />
                 </a>
@@ -83,7 +81,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <p>© {year} Vivre pour l&apos;Éternel — Ministère de Feu et de Résurrection. Tous droits réservés.</p>
+          <p>© {year} {pied.copyright}</p>
           <p>Fait avec <i className="fas fa-heart" style={{ color: '#e74c3c' }} /> pour la gloire de Dieu</p>
         </div>
       </div>

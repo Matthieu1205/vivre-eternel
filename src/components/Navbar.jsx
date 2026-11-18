@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useProgrammes } from "../pages/Programmes";
+import { usePartenaires } from "../pages/Partenaires";
 
-const pages = [
+const basePages = [
   { to: "/", label: "Accueil" },
   {
     base: "/a-propos",
@@ -152,7 +154,21 @@ function NavItem({ page, active }) {
   );
 }
 
+/** Les sous-menus Programmes et Partenaires suivent ce qui est saisi dans le backoffice. */
+function usePages() {
+  const programmes = useProgrammes();
+  const partenaires = usePartenaires();
+  return basePages.map((p) => {
+    if (p.base === "/programmes" && programmes.length)
+      return { ...p, sub: programmes.map((x) => ({ tab: x.id, label: x.label })) };
+    if (p.base === "/partenaires" && partenaires.length)
+      return { ...p, sub: partenaires.map((x) => ({ tab: x.id, label: x.nom })) };
+    return p;
+  });
+}
+
 export default function Navbar() {
+  const pages = usePages();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(null);

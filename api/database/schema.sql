@@ -175,3 +175,24 @@ CREATE TABLE IF NOT EXISTS newsletter (
   email       VARCHAR(190) NOT NULL UNIQUE,   -- stocké en minuscules par l'API
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─────────────────────────────────────────────────────────────
+-- 4. Textes des pages et coordonnées (modifiables dans « Pages du site »)
+--    Créées automatiquement par l'API si elles manquent (voir ensure_schema()).
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS contenus (
+  cle         VARCHAR(100) PRIMARY KEY,       -- ex. « apropos.vision », « site.coordonnees »
+  valeur      MEDIUMTEXT NOT NULL,            -- JSON : uniquement les champs modifiés
+  updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS temoignages_video (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nom         VARCHAR(160) NOT NULL,
+  categorie   VARCHAR(60) NULL,
+  description TEXT NULL,
+  url         VARCHAR(500) NULL,              -- lien YouTube / Facebook ou fichier vidéo
+  duree       VARCHAR(60) NULL,
+  ordre       INT NOT NULL DEFAULT 0,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

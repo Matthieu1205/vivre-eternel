@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { submitForm } from '../lib/data'
 import FormError from '../components/FormError'
+import { PageHero, Paragraphs, useCoordonnees, useSection } from '../lib/content'
 
 function FormulaireSection() {
   const empty = { nom: '', email: '', sujet: '', message: '' }
@@ -79,32 +80,29 @@ export default function Contact() {
   const { tab: urlTab } = useParams()
   const active = (urlTab && ['formulaire', 'whatsapp', 'localisation', 'reseaux'].includes(urlTab)) ? urlTab : 'formulaire'
   const navigate = useNavigate()
+  const t = useSection('contact.textes')
+  const coord = useCoordonnees()
+  const { reseaux = [] } = useSection('site.reseaux')
+  const adresse = (coord.adresse || '').split('\n')
 
   return (
     <>
-      <div className="page-hero">
-        <div className="container">
-          <div className="breadcrumb"><a href="/">Accueil</a> › <span>Contact</span></div>
-          <div className="page-hero-eyebrow"><i className="fas fa-envelope" style={{ marginRight: '.4rem' }} /> Parlons-nous</div>
-          <h1>Contactez-nous</h1>
-          <p>Nous sommes là pour vous. Choisissez le canal qui vous convient le mieux.</p>
-        </div>
-      </div>
+      <PageHero section="contact.hero" crumb="Contact" icon="fas fa-envelope" />
       <section className="section">
         <div className="container">
 
           {active === 'formulaire' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '3rem', alignItems: 'start' }}>
               <div>
-                <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.6rem', marginBottom: '1rem' }}>Écrivez-nous</h3>
-                <p style={{ color: 'var(--text2)', marginBottom: '1.75rem' }}>Pour toute question, demande de prière, information sur nos programmes ou souhait de partenariat — nous lisons chaque message avec attention.</p>
+                <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.6rem', marginBottom: '1rem' }}>{t.formulaire_titre}</h3>
+                <Paragraphs text={t.formulaire_texte} style={{ color: 'var(--text2)', marginBottom: '1.75rem' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {[
-                    { icon: 'fa-envelope', titre: "Email", val: "contact@vivrepourleternel.org" },
-                    { icon: 'fa-phone', titre: "Téléphone 1", val: "+225 05 46 45 77 42" },
-                    { icon: 'fa-phone', titre: "Téléphone 2", val: "+225 07 09 04 57 07" },
-                    { icon: 'fa-clock', titre: "Disponibilité", val: "Lun – Sam · 8h – 20h" },
-                  ].map(item => (
+                    { icon: 'fa-envelope', titre: "Email", val: coord.email },
+                    { icon: 'fa-phone', titre: "Téléphone 1", val: coord.tel1 },
+                    { icon: 'fa-phone', titre: "Téléphone 2", val: coord.tel2 },
+                    { icon: 'fa-clock', titre: "Disponibilité", val: coord.disponibilite },
+                  ].filter(item => item.val).map(item => (
                     <div key={item.titre} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                       <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
                         <i className={`fas ${item.icon}`} />
@@ -124,16 +122,14 @@ export default function Contact() {
           {active === 'whatsapp' && (
             <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
               <div style={{ marginBottom: '1.5rem' }}><i className="fab fa-whatsapp" style={{ fontSize: '5rem', color: '#25D366' }} /></div>
-              <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.8rem', marginBottom: '1rem' }}>Chat WhatsApp</h3>
-              <p style={{ color: 'var(--text2)', marginBottom: '2rem', lineHeight: 1.8 }}>
-                Vous préférez une réponse rapide ? Notre équipe est disponible sur WhatsApp pour répondre à vos questions, prendre vos demandes de prière et vous orienter vers les bons programmes.
-              </p>
+              <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.8rem', marginBottom: '1rem' }}>{t.whatsapp_titre}</h3>
+              <Paragraphs text={t.whatsapp_texte} style={{ color: 'var(--text2)', marginBottom: '2rem', lineHeight: 1.8 }} />
               <div className="card" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
                 <p style={{ fontWeight: 700, color: 'var(--blue)', marginBottom: '.5rem' }}>Numéro WhatsApp</p>
-                <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)' }}>+225 05 46 45 77 42</p>
-                <p style={{ fontSize: '.82rem', color: 'var(--text2)', margin: 0 }}>Disponible Lun – Sam · 8h – 20h</p>
+                <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)' }}>{coord.tel1}</p>
+                {coord.disponibilite && <p style={{ fontSize: '.82rem', color: 'var(--text2)', margin: 0 }}>Disponible {coord.disponibilite}</p>}
               </div>
-              <a href="https://wa.me/2250546457742?text=Bonjour%2C%20je%20contacte%20le%20minist%C3%A8re%20Vivre%20pour%20l%27%C3%89ternel."
+              <a href={coord.waLink()}
                 className="btn btn-primary" target="_blank" rel="noopener noreferrer"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '.75rem', fontSize: '1.05rem', padding: '1rem 2.5rem' }}>
                 <i className="fab fa-whatsapp" style={{ fontSize: '1.3rem' }} /> Démarrer la conversation
@@ -147,13 +143,13 @@ export default function Contact() {
           {active === 'localisation' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '3rem', alignItems: 'start' }}>
               <div>
-                <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.6rem', marginBottom: '1rem' }}>Nous Trouver</h3>
+                <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.6rem', marginBottom: '1rem' }}>{t.localisation_titre}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {[
-                    { icon: 'fas fa-map-marker-alt', titre: "Siège du Ministère", val: "Modeste Nouveau Goudron\nAncienne Route de Bassam, Abidjan" },
-                    { icon: 'fas fa-clock', titre: "Horaires d'ouverture", val: "Lundi – Vendredi\n8h00 – 18h00" },
-                    { icon: 'fas fa-church', titre: "Culte & Réunions", val: "Mercredi 19h\nDimanche 9h – 12h" },
-                  ].map(item => (
+                    { icon: 'fas fa-map-marker-alt', titre: "Siège du Ministère", val: coord.adresse },
+                    { icon: 'fas fa-clock', titre: "Horaires d'ouverture", val: coord.horaires },
+                    { icon: 'fas fa-church', titre: "Culte & Réunions", val: coord.cultes },
+                  ].filter(item => item.val).map(item => (
                     <div key={item.titre} className="card" style={{ padding: '1rem 1.25rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                       <i className={item.icon} style={{ fontSize: '1.5rem', flexShrink: 0, color: 'var(--blue)', marginTop: '.15rem' }} />
                       <div>
@@ -167,31 +163,24 @@ export default function Contact() {
               <div style={{ background: 'var(--bg2)', borderRadius: 16, border: '1px solid var(--border)', height: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
                 <i className="fas fa-map" style={{ fontSize: '3rem', color: 'var(--text2)' }} />
                 <p style={{ color: 'var(--text2)', textAlign: 'center', maxWidth: 280 }}>
-                  Modeste Nouveau Goudron<br />
-                  <span style={{ fontSize: '.82rem' }}>Ancienne Route de Bassam, Abidjan</span>
+                  {adresse[0]}<br />
+                  <span style={{ fontSize: '.82rem' }}>{adresse.slice(1).join(', ')}</span>
                 </p>
-                <a href="https://maps.google.com/?q=Modeste+Nouveau+Goudron+Ancienne+Route+de+Bassam+Abidjan" target="_blank" rel="noopener noreferrer"
+                {coord.maps_url && <a href={coord.maps_url} target="_blank" rel="noopener noreferrer"
                   className="btn btn-outline" style={{ fontSize: '.82rem' }}>
                   <i className="fas fa-directions" /> Obtenir l&apos;itinéraire
-                </a>
+                </a>}
               </div>
             </div>
           )}
 
           {active === 'reseaux' && (
             <div style={{ maxWidth: 700, margin: '0 auto' }}>
-              <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.6rem', marginBottom: '1rem', textAlign: 'center' }}>Suivez-nous</h3>
-              <p style={{ color: 'var(--text2)', textAlign: 'center', marginBottom: '2rem' }}>Rejoignez notre communauté en ligne pour recevoir les enseignements, témoignages et annonces en temps réel.</p>
+              <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.6rem', marginBottom: '1rem', textAlign: 'center' }}>{t.reseaux_titre}</h3>
+              <Paragraphs text={t.reseaux_texte} style={{ color: 'var(--text2)', textAlign: 'center', marginBottom: '2rem' }} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                {[
-                  { nom: "Facebook", icon: "fab fa-facebook-f", handle: "@VivrePourl'Éternel", color: "#1877F2", bg: "#E7F0FD", desc: "Publications quotidiennes, lives et témoignages" },
-                  { nom: "YouTube", icon: "fab fa-youtube", handle: "@VPEMinistere", color: "#FF0000", bg: "#FEE2E2", desc: "Messages vidéo, veillées & conférences" },
-                  { nom: "Instagram", icon: "fab fa-instagram", handle: "@vpe_ministere", color: "#E1306C", bg: "#FDE7F0", desc: "Moments forts, versets du jour & galerie" },
-                  { nom: "TikTok", icon: "fab fa-tiktok", handle: "@vivrepourleternal", color: "#000000", bg: "#F1F1F1", desc: "Courts messages inspirants & témoignages" },
-                  { nom: "WhatsApp", icon: "fab fa-whatsapp", handle: "Groupe VPE", color: "#25D366", bg: "#DCFCE7", desc: "Communauté d'entraide & partage de Parole" },
-                  { nom: "Telegram", icon: "fab fa-telegram-plane", handle: "@VPEMinistere", color: "#0088CC", bg: "#E0F2FE", desc: "Annonces officielles & enseignements audio" },
-                ].map(s => (
-                  <a key={s.nom} href="#" className="card reveal"
+                {reseaux.map(s => ({ ...s, bg: `${s.color || '#0284C7'}1f` })).map(s => (
+                  <a key={s.nom} href={s.url || '#'} target={s.url ? '_blank' : undefined} rel="noopener noreferrer" className="card reveal"
                     style={{ display: 'flex', gap: '1rem', alignItems: 'center', textDecoration: 'none', color: 'inherit', transition: 'transform .2s' }}
                     onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                     onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>

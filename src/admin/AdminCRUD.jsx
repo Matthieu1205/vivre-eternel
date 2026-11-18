@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
+import ImageField from './ImageField'
 
 const focusStyle = { borderColor: '#0284C7', boxShadow: '0 0 0 3px rgba(2,132,199,.12)' }
 const blurStyle  = { borderColor: '#e2e8f0', boxShadow: 'none' }
@@ -287,6 +288,8 @@ export function AdminTable({ title, icon, tableName, columns, fields, defaultRow
                         onFocus={e => Object.assign(e.target.style, focusStyle)}
                         onBlur={e =>  Object.assign(e.target.style, blurStyle)}
                       />
+                    ) : f.type === 'image' ? (
+                      <ImageField value={form[f.key]} onChange={v => setForm(p => ({ ...p, [f.key]: v }))} inputStyle={inputBase} />
                     ) : f.type === 'select' ? (
                       <select
                         value={form[f.key] ?? ''}

@@ -12,3 +12,5 @@ api/uploads/*
 # Archive de l’API à envoyer sur o2switch (générée)
 api-o2switch.zip
 api-o2switch/
+site-o2switch.zip
+api-mise-a-jour.zip

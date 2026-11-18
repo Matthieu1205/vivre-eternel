@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useContent } from '../lib/data'
+import { PageHero, Paragraphs, Verse, useSection } from '../lib/content'
 
 const terrain_defaut = [
   { lieu: "Marché de Cocody", date: "15 Jan 2025", participants: 12, ames: 8, desc: "Distribution de l'Évangile de Jean et prière pour les malades au marché." },
@@ -198,6 +199,67 @@ const TABS = [
   { id: 'galerie', label: 'Galerie photos/vidéos', icon: 'fas fa-camera', Component: GalerieTab },
 ]
 
+/** Bloc « Projet phare » (Mont des Oliviers), modifiable dans Pages du site › Activités. */
+function ProjetPhare() {
+  const c = useSection('activites.projet')
+  if (c.afficher === 'non') return null
+  return (
+    <div style={{ background: 'var(--bg2)', borderBottom: '1px solid var(--border)', padding: '3rem 0' }}>
+      <div className="container">
+        {c.etiquette && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '1.5rem' }}>
+            <span style={{ width: 4, height: 28, borderRadius: 4, background: 'var(--blue)', display: 'inline-block' }} />
+            <span style={{ fontSize: '.75rem', fontWeight: 700, letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--blue)' }}>{c.etiquette}</span>
+          </div>
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: c.image ? '1.2fr 1fr' : '1fr', gap: '3rem', alignItems: 'center' }}>
+          {c.image && (
+            <div style={{ borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 56px rgba(0,0,0,.18)', lineHeight: 0 }}>
+              <img src={c.image} alt={c.titre} style={{ width: '100%', display: 'block' }}
+                onError={e => { e.target.parentElement.style.display = 'none' }} />
+            </div>
+          )}
+          <div>
+            {c.statut && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '.4rem', background: '#FEF3C7', color: '#B45309', borderRadius: 100, padding: '.25rem .85rem', fontSize: '.75rem', fontWeight: 700, marginBottom: '1rem' }}>
+                <i className="fas fa-hard-hat" /> {c.statut}
+              </div>
+            )}
+            <h2 style={{ fontFamily: 'var(--fs)', fontSize: '1.9rem', color: 'var(--blue-dark)', marginBottom: '.75rem', lineHeight: 1.2 }}>{c.titre}</h2>
+            <Paragraphs text={c.texte} style={{ fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.8, marginBottom: '1.25rem' }} />
+            {(c.points || []).length > 0 && (
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '.55rem', marginBottom: '1.5rem' }}>
+                {c.points.map(pt => (
+                  <li key={pt} style={{ display: 'flex', gap: '.65rem', alignItems: 'center', fontSize: '.88rem', color: 'var(--text2)' }}>
+                    <i className="fas fa-check-circle" style={{ color: 'var(--blue)', flexShrink: 0 }} /> {pt}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {(c.infos || []).length > 0 && (
+              <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', fontSize: '.82rem', color: 'var(--text2)', marginBottom: '1.75rem' }}>
+                {c.infos.map((info, i) => (
+                  <span key={info}>
+                    {i > 0 && <span style={{ color: 'var(--border)', marginRight: '.6rem' }}>|</span>}
+                    <i className="fas fa-info-circle" style={{ color: 'var(--blue)', marginRight: '.3rem' }} /> {info}
+                  </span>
+                ))}
+              </div>
+            )}
+            <Verse text={c.verse_text} cite={c.verse_ref} style={{ marginBottom: '1.75rem' }} />
+            {c.bouton && c.lien && (
+              <a href={c.lien} target="_blank" rel="noreferrer" className="btn btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', fontSize: '.95rem' }}>
+                <i className="fas fa-heart" /> {c.bouton}
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Activites() {
   const { tab: urlTab } = useParams()
   const active = (urlTab && ['terrain', 'social', 'evenements', 'galerie'].includes(urlTab)) ? urlTab : 'terrain'
@@ -207,70 +269,8 @@ export default function Activites() {
 
   return (
     <>
-      <div className="page-hero">
-        <div className="container">
-          <div className="breadcrumb"><a href="/">Accueil</a> › <span>Activités &amp; Actions</span></div>
-          <div className="page-hero-eyebrow"><i className="fas fa-globe" style={{ marginRight: '.4rem' }} /> Sur le Terrain</div>
-          <h1>Activités &amp; Actions</h1>
-          <p>De l&apos;Évangile prêché dans les rues au pain partagé dans les quartiers — la foi en action.</p>
-        </div>
-      </div>
-      {/* Mont des Oliviers – projet phare */}
-      <div style={{ background: 'var(--bg2)', borderBottom: '1px solid var(--border)', padding: '3rem 0' }}>
-        <div className="container">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '1.5rem' }}>
-            <span style={{ width: 4, height: 28, borderRadius: 4, background: 'var(--blue)', display: 'inline-block' }} />
-            <span style={{ fontSize: '.75rem', fontWeight: 700, letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--blue)' }}>Projet phare</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '3rem', alignItems: 'center' }}>
-            {/* Image */}
-            <div style={{ borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 56px rgba(0,0,0,.18)', lineHeight: 0 }}>
-              <img
-                src="/action.jpeg"
-                alt="Ouverture du Mont des Oliviers"
-                style={{ width: '100%', display: 'block' }}
-                onError={e => { e.target.parentElement.style.display = 'none' }}
-              />
-            </div>
-            {/* Infos */}
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '.4rem', background: '#FEF3C7', color: '#B45309', borderRadius: 100, padding: '.25rem .85rem', fontSize: '.75rem', fontWeight: 700, marginBottom: '1rem' }}>
-                <i className="fas fa-hard-hat" /> Projet en construction
-              </div>
-              <h2 style={{ fontFamily: 'var(--fs)', fontSize: '1.9rem', color: 'var(--blue-dark)', marginBottom: '.75rem', lineHeight: 1.2 }}>
-                Ouverture du<br />Mont des Oliviers
-              </h2>
-              <p style={{ fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.8, marginBottom: '1.25rem' }}>
-                Centre d'accueil et d'accompagnement spirituel, moral, psychologique, matériel et alimentaire — un lieu de refuge et de restauration pour les familles, les couples et les jeunes.
-              </p>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '.55rem', marginBottom: '1.5rem' }}>
-                {['Accompagnement Spirituel', 'Soutien Moral & Psychologique', 'Aide Matérielle & Alimentaire'].map(pt => (
-                  <li key={pt} style={{ display: 'flex', gap: '.65rem', alignItems: 'center', fontSize: '.88rem', color: 'var(--text2)' }}>
-                    <i className="fas fa-check-circle" style={{ color: 'var(--blue)', flexShrink: 0 }} /> {pt}
-                  </li>
-                ))}
-              </ul>
-              <div style={{ display: 'flex', gap: '.6rem', fontSize: '.82rem', color: 'var(--text2)', marginBottom: '1.75rem' }}>
-                <span><i className="fas fa-ruler-combined" style={{ color: 'var(--blue)', marginRight: '.3rem' }} /> Superficie : 300 m²</span>
-                <span style={{ color: 'var(--border)' }}>|</span>
-                <span><i className="fas fa-map" style={{ color: 'var(--blue)', marginRight: '.3rem' }} /> Terrain : 600 m²</span>
-              </div>
-              <div className="verse-block" style={{ marginBottom: '1.75rem' }}>
-                <p>Et moi, si j'ai été élevé de la terre, j'attirerai tous les hommes à moi.</p>
-                <cite>Ésaïe 59:16</cite>
-              </div>
-              <a
-                href="https://don-mont-des-oliviers.klicvote.com/"
-                target="_blank" rel="noreferrer"
-                className="btn btn-primary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', fontSize: '.95rem' }}
-              >
-                <i className="fas fa-heart" /> Faire un don · 1 000 FCFA = 1 vie changée
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHero section="activites.hero" crumb="Activités & Actions" icon="fas fa-globe" />
+      <ProjetPhare />
 
       <section className="section">
         <div className="container"><Component /></div>

@@ -22,7 +22,7 @@ const fields = [
   { key: 'verse_text', label: 'Verset biblique (texte)', type: 'textarea' },
   { key: 'verse_ref', label: 'Référence du verset', placeholder: 'Psaume 41:1' },
   { key: 'site_url', label: 'Site web (URL)', placeholder: 'https://…' },
-  { key: 'logo_url', label: 'Logo (URL)', placeholder: 'https://…' },
+  { key: 'logo_url', type: 'image', label: 'Logo', placeholder: '' },
   { key: 'contact', label: 'Contact', placeholder: 'Email ou téléphone' },
 ]
 

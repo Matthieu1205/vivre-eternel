@@ -3,17 +3,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { submitForm } from '../lib/data'
 import FormError from '../components/FormError'
 import { useProgrammes } from './Programmes'
+import { PageHero, Paragraphs, Verse, useCoordonnees, useSection } from '../lib/content'
 
-const besoins = [
-  { icon: 'fas fa-hospital', label: 'Guérison & Santé' },
-  { icon: 'fas fa-users', label: 'Restauration Familiale' },
-  { icon: 'fas fa-briefcase', label: 'Provision & Emploi' },
-  { icon: 'fas fa-unlock', label: 'Délivrance' },
-  { icon: 'fas fa-globe', label: 'Intercession Nations' },
-  { icon: 'fas fa-graduation-cap', label: 'Projets & Vocation' },
-]
 
 function FormulaireTab() {
+  const c = useSection('priere.formulaire')
+  const coord = useCoordonnees()
+  const besoins = c.domaines || []
   const [form, setForm] = useState({ nom: '', email: '', categorie: '', priere: '', confidentiel: false })
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,7 +30,7 @@ function FormulaireTab() {
     <div className="form-success">
       <div style={{ marginBottom: '1rem' }}><i className="fas fa-hands-praying" style={{ fontSize: '3rem', color: 'var(--blue)' }} /></div>
       <h3>Prière reçue !</h3>
-      <p>Notre équipe d&apos;intercesseurs a reçu votre demande. Nous prions pour vous avec foi et constance.</p>
+      <p>{c.confirmation}</p>
       <button className="btn btn-outline" onClick={() => setStatus('')} style={{ marginTop: '1.5rem' }}>
         Soumettre une autre prière
       </button>
@@ -43,7 +39,7 @@ function FormulaireTab() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '3rem', alignItems: 'start' }}>
       <div>
-        <h3 style={{ fontFamily: 'var(--fs)', marginBottom: '1.25rem' }}>Domaines de prière</h3>
+        <h3 style={{ fontFamily: 'var(--fs)', marginBottom: '1.25rem' }}>{c.titre}</h3>
         <div className="prayer-needs">
           {besoins.map(b => (
             <div key={b.label} className="prayer-need-item" onClick={() => setForm(f => ({ ...f, categorie: b.label }))}>
@@ -52,10 +48,7 @@ function FormulaireTab() {
             </div>
           ))}
         </div>
-        <div className="verse-block" style={{ marginTop: '1.5rem' }}>
-          <p>Confessez vos péchés les uns aux autres, et priez les uns pour les autres, afin que vous soyez guéris.</p>
-          <cite>Jacques 5:16</cite>
-        </div>
+        <Verse text={c.verse_text} cite={c.verse_ref} style={{ marginTop: '1.5rem' }} />
       </div>
       <form className="contact-form" onSubmit={submit}>
         <div className="form-row">
@@ -95,14 +88,14 @@ function FormulaireTab() {
           <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         </div>
         <a
-          href="https://wa.me/2250546457742?text=Bonjour%2C%20j%27ai%20une%20demande%20de%20pri%C3%A8re%20%3A%20"
+          href={coord.waLink("Bonjour, j'ai une demande de prière : ")}
           target="_blank" rel="noopener noreferrer"
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.65rem', width: '100%', padding: '.85rem', borderRadius: 100, background: '#25D366', color: '#fff', fontWeight: 700, fontSize: '.95rem', textDecoration: 'none', transition: 'opacity .2s' }}
           onMouseOver={e => e.currentTarget.style.opacity = '.88'}
           onMouseOut={e => e.currentTarget.style.opacity = '1'}
         >
           <i className="fab fa-whatsapp" style={{ fontSize: '1.2rem' }} />
-          Envoyer via WhatsApp · 05 46 45 77 42
+          Envoyer via WhatsApp · {coord.tel1}
         </a>
       </form>
     </div>
@@ -110,6 +103,7 @@ function FormulaireTab() {
 }
 
 function ProgrammeTab() {
+  const c = useSection('priere.programme')
   const colors = ['#0284C7', '#7C3AED', '#059669', '#D97706', '#DC2626']
   const programmes = useProgrammes().map((p, i) => ({
     icon: p.icon, titre: p.label, desc: p.desc, horaire: p.horaire, color: colors[i % colors.length],
@@ -118,11 +112,9 @@ function ProgrammeTab() {
   return (
     <div style={{ maxWidth: 820 }}>
       <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.6rem', marginBottom: '.5rem', color: 'var(--blue-dark)' }}>
-        Programme de Prière
+        {c.titre}
       </h3>
-      <p style={{ color: 'var(--text2)', marginBottom: '2rem', fontSize: '.95rem' }}>
-        Liste des différents programmes du ministère :
-      </p>
+      {c.texte && <p style={{ color: 'var(--text2)', marginBottom: '2rem', fontSize: '.95rem' }}>{c.texte}</p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {programmes.map(p => (
           <div key={p.titre} className="card" style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', padding: '1.5rem', borderLeft: `4px solid ${p.color}` }}>
@@ -142,21 +134,16 @@ function ProgrammeTab() {
 }
 
 function IntercessionTab() {
+  const c = useSection('priere.intercession')
   return (
     <div style={{ maxWidth: 760 }}>
-      <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.8rem', marginBottom: '1.25rem' }}>L&apos;Intercession : Un Appel Divin</h3>
-      <p style={{ marginBottom: '1rem' }}>L&apos;intercession est le fait de se tenir entre Dieu et l&apos;homme pour plaider en faveur d&apos;un autre. C&apos;est l&apos;un des actes les plus nobles et les plus puissants du croyant.</p>
-      <p style={{ marginBottom: '1.5rem' }}>Notre ministère forme et équipe des intercesseurs qui comprennent l&apos;autorité spirituelle qui leur est conférée en Christ pour briser les forteresses ennemies et établir le royaume de Dieu.</p>
-      <div className="values-list">
-        {[
-          { icon: 'fas fa-book-open', t: "Fondement Biblique", d: "L'intercession est enracinée dans la Parole. Nous étudions les principes scripturaires de la prière." },
-          { icon: 'fas fa-fire', t: "Le Fardeau Divin", d: "Recevoir le fardeau de Dieu pour des situations spécifiques est le début de toute intercession puissante." },
-          { icon: 'fas fa-shield-alt', t: "Guerre Spirituelle", d: "Comprendre les principes de la guerre spirituelle pour prier avec autorité et efficacité." },
-          { icon: 'fas fa-check-circle', t: "Prière avec Résultats", d: "Documenter les réponses de Dieu renforce la foi et encourage toute la communauté." },
-        ].map(v => (
-          <div key={v.t} className="value-row reveal">
+      <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.8rem', marginBottom: '1.25rem' }}>{c.titre}</h3>
+      <Paragraphs text={c.texte} style={{ marginBottom: '1rem' }} />
+      <div className="values-list" style={{ marginTop: '1.5rem' }}>
+        {(c.cartes || []).map(v => (
+          <div key={v.titre} className="value-row reveal">
             <div className="value-icon"><i className={v.icon} /></div>
-            <div><h4>{v.t}</h4><p>{v.d}</p></div>
+            <div><h4>{v.titre}</h4><p>{v.texte}</p></div>
           </div>
         ))}
       </div>
@@ -165,27 +152,25 @@ function IntercessionTab() {
 }
 
 function RejoindreTab() {
+  const c = useSection('priere.rejoindre')
   return (
     <div style={{ maxWidth: 760 }}>
-      <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.8rem', marginBottom: '1rem' }}>Rejoindre les Intercesseurs</h3>
-      <p style={{ marginBottom: '1.5rem' }}>Vous sentez l&apos;appel à la prière ? Rejoignez notre équipe d&apos;intercesseurs dévoués. Pas besoin d&apos;être parfait — juste disponible et sincère.</p>
+      <h3 style={{ fontFamily: 'var(--fs)', fontSize: '1.8rem', marginBottom: '1rem' }}>{c.titre}</h3>
+      <Paragraphs text={c.texte} style={{ marginBottom: '1.5rem' }} />
       <div className="card-grid" style={{ marginBottom: '2rem' }}>
-        {[
-          { icon: 'fas fa-clock', t: 'Flexible', d: "Priez selon votre disponibilité. Nous nous adaptons à votre emploi du temps." },
-          { icon: 'fas fa-mobile-alt', t: 'À Distance', d: "Participez en ligne ou en présentiel, depuis n'importe où dans le monde." },
-          { icon: 'fas fa-book', t: 'Formation', d: "Nous vous formons aux principes de l'intercession biblique." },
-          { icon: 'fas fa-handshake', t: 'Communauté', d: "Rejoignez une famille soudée par la même passion pour Dieu." },
-        ].map(c => (
-          <div key={c.t} className="card reveal">
-            <div className="card-icon"><i className={c.icon} /></div>
-            <h3>{c.t}</h3>
-            <p>{c.d}</p>
+        {(c.cartes || []).map(v => (
+          <div key={v.titre} className="card reveal">
+            <div className="card-icon"><i className={v.icon} /></div>
+            <h3>{v.titre}</h3>
+            <p>{v.texte}</p>
           </div>
         ))}
       </div>
-      <Link to="/contact" className="btn btn-primary">
-        <i className="fas fa-heart" /> Je veux rejoindre l&apos;équipe
-      </Link>
+      {c.bouton && (
+        <Link to="/contact" className="btn btn-primary">
+          <i className="fas fa-heart" /> {c.bouton}
+        </Link>
+      )}
     </div>
   )
 }
@@ -206,14 +191,7 @@ export default function Priere() {
 
   return (
     <>
-      <div className="page-hero">
-        <div className="container">
-          <div className="breadcrumb"><a href="/">Accueil</a> › <span>Prière &amp; Intercession</span></div>
-          <div className="page-hero-eyebrow"><i className="fas fa-hands-praying" style={{ marginRight: '.4rem' }} /> Mur d&apos;Intercession</div>
-          <h1>Prière &amp; Intercession</h1>
-          <p>Votre besoin est confié à notre équipe d&apos;intercesseurs dévoués. Nous prions pour vous.</p>
-        </div>
-      </div>
+      <PageHero section="priere.hero" crumb="Prière & Intercession" icon="fas fa-hands-praying" />
       <section className="section">
         <div className="container"><Component /></div>
       </section>

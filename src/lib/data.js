@@ -22,6 +22,17 @@ export async function submitForm(table, row) {
  * @param {string} path            ex. '/public/programmes' ou '/public/activites?categorie=terrain'
  * @param {(row: any) => any} map  conversion d'une ligne vers le format attendu par la page
  */
+// Une même liste demandée par plusieurs composants (ex. menu + page) n'est chargée qu'une fois.
+const listCache = new Map()
+function loadList(path) {
+  if (!listCache.has(path)) {
+    const promise = api(path)
+    listCache.set(path, promise)
+    promise.then(({ error }) => { if (error) listCache.delete(path) })
+  }
+  return listCache.get(path)
+}
+
 export function useContent(path, map, fallback) {
   const [items, setItems] = useState(fallback)
   const [loading, setLoading] = useState(isApiConfigured)
@@ -29,7 +40,7 @@ export function useContent(path, map, fallback) {
   useEffect(() => {
     if (!isApiConfigured) return
     let active = true
-    api(path).then(({ data, error }) => {
+    loadList(path).then(({ data, error }) => {
       if (!active) return
       if (error) console.error(`[VPE] lecture ${path} :`, error)
       else if (Array.isArray(data) && data.length) setItems(data.map(map))

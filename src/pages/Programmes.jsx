@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useContent, lines } from '../lib/data'
+import { PageHero } from '../lib/content'
 
 const PROGS = [
   {
@@ -78,14 +79,7 @@ export default function Programmes() {
 
   return (
     <>
-      <div className="page-hero">
-        <div className="container">
-          <div className="breadcrumb"><a href="/">Accueil</a> › <span>Programmes</span></div>
-          <div className="page-hero-eyebrow"><i className="fas fa-fire" style={{ marginRight: '.4rem' }} /> Nos Programmes</div>
-          <h1>Programmes du Ministère</h1>
-          <p>{progs.length} programmes de rencontre avec Dieu, conçus pour transformer, libérer et fortifier.</p>
-        </div>
-      </div>
+      <PageHero section="programmes.hero" crumb="Programmes" icon="fas fa-fire" />
 
       <section className="section">
         <div className="container">

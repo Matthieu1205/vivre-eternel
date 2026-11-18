@@ -24,12 +24,16 @@ import AdminPartenaires from './admin/AdminPartenaires'
 import AdminMediatheque from './admin/AdminMediatheque'
 import AdminAnnonce from './admin/AdminAnnonce'
 import AdminMessages from './admin/AdminMessages'
+import AdminPages from './admin/AdminPages'
+import AdminTemoignagesVideo from './admin/AdminTemoignagesVideo'
 import PrivateRoute from './admin/PrivateRoute'
 
+import { ContentProvider } from './lib/content'
 import './styles/global.css'
 
 export default function App() {
   return (
+    <ContentProvider>
     <BrowserRouter>
       <Routes>
         {/* ── Site public ── */}
@@ -71,6 +75,9 @@ export default function App() {
         <Route path="/admin/*" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="annonce"   element={<AdminAnnonce />} />
+          <Route path="pages" element={<AdminPages />} />
+          <Route path="coordonnees" element={<AdminPages mode="general" />} />
+          <Route path="temoignages-video" element={<AdminTemoignagesVideo />} />
           <Route path="programmes" element={<AdminProgrammes />} />
           <Route path="enseignements" element={<AdminEnseignements />} />
           <Route path="activites" element={<AdminActivites />} />
@@ -84,5 +91,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ContentProvider>
   )
 }

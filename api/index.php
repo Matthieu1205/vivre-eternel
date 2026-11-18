@@ -4,12 +4,14 @@
 //
 //  Routes publiques
 //    GET    /public/{table}                 contenu du site (programmes, enseignements…)
+//    GET    /public/contenus                textes des pages modifiés dans le backoffice
 //    POST   /forms/{table}                  envoi d'un formulaire
 //  Connexion
 //    POST   /auth/login | /auth/logout      GET /auth/me | /auth/status   POST /auth/setup
 //  Backoffice (en-tête X-Auth-Token)
 //    GET    /admin/{table}[?champ=valeur]   GET /admin/{table}/count[?champ=valeur]
 //    POST   /admin/{table}                  PUT /admin/{table}/{id}   DELETE /admin/{table}/{id}
+//    PUT    /admin/contenus/{clé}           DELETE /admin/contenus/{clé} (rétablir le texte d'origine)
 //    GET    /admin/media/{espace}           POST /admin/media/{espace}   DELETE /admin/media/{espace}/{fichier}
 // ════════════════════════════════════════════════════════════════════
 declare(strict_types=1);
@@ -49,6 +51,13 @@ function route(string $method, array $s): never
         case $s === ['health'] && $method === 'GET':
             db()->query('SELECT 1');
             send_json(['ok' => true, 'database' => 'ok']);
+
+        case $s === ['public', 'contenus'] && $method === 'GET':
+            public_contenus();
+        case count($s) === 3 && $s[0] === 'admin' && $s[1] === 'contenus' && $method === 'PUT':
+            admin_contenu_save($s[2]);
+        case count($s) === 3 && $s[0] === 'admin' && $s[1] === 'contenus' && $method === 'DELETE':
+            admin_contenu_reset($s[2]);
 
         case count($s) === 2 && $s[0] === 'public' && $method === 'GET':
             public_list($s[1]);

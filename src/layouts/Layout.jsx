@@ -4,11 +4,13 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import Newsletter from '../components/Newsletter'
 import AnnonceUrgente from '../components/AnnonceUrgente'
+import { useCoordonnees } from '../lib/content'
 
 export default function Layout({ children }) {
   const [showTop, setShowTop] = useState(false)
   const [progress, setProgress] = useState(0)
   const { pathname } = useLocation()
+  const coord = useCoordonnees()
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -53,10 +55,10 @@ export default function Layout({ children }) {
       <Newsletter />
       <Footer />
 
-      <a href="https://wa.me/2250546457742?text=Bonjour%2C%20je%20contacte%20le%20minist%C3%A8re%20Vivre%20pour%20l%27%C3%89ternel."
+      <a href={coord.waLink()}
          className="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
         <i className="fab fa-whatsapp" />
-        <span className="whatsapp-float-label">05 46 45 77 42</span>
+        <span className="whatsapp-float-label">{String(coord.tel1 || '').replace(/^\+225\s*/, '')}</span>
       </a>
 
       <button className={`scroll-top${showTop ? ' visible' : ''}`}

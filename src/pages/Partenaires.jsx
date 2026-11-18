@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useContent, lines } from '../lib/data'
+import { PageHero } from '../lib/content'
 
 const partenaires = [
   {
@@ -93,23 +94,20 @@ const fromDb = r => {
   }
 }
 
+export function usePartenaires() {
+  return useContent('/public/partenaires', fromDb, partenaires).items
+}
+
 export default function Partenaires() {
   const { tab: urlTab } = useParams()
   const navigate = useNavigate()
-  const { items } = useContent('/public/partenaires', fromDb, partenaires)
+  const items = usePartenaires()
   const p = items.find(x => x.id === urlTab) || items[0]
   const active = p.id
 
   return (
     <>
-      <div className="page-hero">
-        <div className="container">
-          <div className="breadcrumb"><a href="/">Accueil</a> › <span>Partenaires &amp; Projets</span></div>
-          <div className="page-hero-eyebrow"><i className="fas fa-handshake" style={{ marginRight: '.4rem' }} /> Ensemble pour le Royaume</div>
-          <h1>Partenaires &amp; Projets</h1>
-          <p>Seuls nous allons plus vite. Ensemble nous allons plus loin. Découvrez nos partenaires en mission.</p>
-        </div>
-      </div>
+      <PageHero section="partenaires.hero" crumb="Partenaires & Projets" icon="fas fa-handshake" />
       <section className="section">
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' }}>

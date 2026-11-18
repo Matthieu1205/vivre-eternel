@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { submitForm } from '../lib/data'
+import { useSection } from '../lib/content'
 
 export default function Newsletter() {
   const [email, setEmail] = useState('')
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const pied = useSection('site.pied')
 
   const submit = async e => {
     e.preventDefault()
@@ -23,8 +25,8 @@ export default function Newsletter() {
       <div className="container">
         <div className="newsletter-inner">
           <div className="newsletter-text">
-            <h3><i className="fas fa-envelope" /> Verset du Jour &amp; Actualités</h3>
-            <p>Recevez chaque matin un verset, un message d&apos;encouragement et les nouvelles du ministère.</p>
+            <h3><i className="fas fa-envelope" /> {pied.newsletter_titre}</h3>
+            <p>{pied.newsletter_texte}</p>
           </div>
           {done ? (
             <div style={{ color: 'var(--gold)', fontFamily: 'var(--fs)', fontSize: '1.1rem' }}>
